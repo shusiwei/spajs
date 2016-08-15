@@ -15,7 +15,11 @@
     if (global.spajs) return global.spajs;
 
     // CMD接口
-    if (typeof define === 'function' && define.cmd) {
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery', 'wi'], function($, WI) {
+            return factory(global, $, WI, template(global));
+        });
+    } else if (typeof define === 'function' && define.cmd) {
         define(function(require, exports, module) {
             module.exports = factory(global, require('jquery'), require('wi'), template(global));
         });
