@@ -15,11 +15,7 @@
     if (global.spajs) return global.spajs;
 
     // CMD接口
-    if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'wi'], function($, WI) {
-            return factory(global, $, WI, template(global));
-        });
-    } else if (typeof define === 'function' && define.cmd) {
+    if (typeof define === 'function' && define.cmd) {
         define(function(require, exports, module) {
             module.exports = factory(global, require('jquery'), require('wi'), template(global));
         });
@@ -37,8 +33,8 @@
 
         // 错误页模板
         tplRegex = [/{{#header}}/, /{{header#}}/, /{{#container}}/, /{{container#}}/, /{{#title#}}/, /{{#back#}}/, /{{#forward#}}/, /{{#home#}}/, /{{#title}}/, /{{title#}}/],
-        tplRepStr = [document.body.style.hasOwnProperty('webkitBackdropFilter') ? '<header class="page-header backdrop">' : '<header class="page-header">', '</header>', '<div class="page-container">', '</div>', '<span class="page-title">{{=it.TITLE}}</span>', '<a data-rel="back" class="icon back"></a>', '<a data-rel="forward" class="icon forward"></a>', '<a data-rel="home" class="icon home"></a>', '<span class="page-title">', '</span>'],
-        errorTpl = [tplRepStr[0] + tplRepStr[4] + tplRepStr[5] + tplRepStr[1] + tplRepStr[2] +'<div class="app-error"><p class="app-error-desc iconfont i-{{?it.icon}}{{=it.icon}}{{??}}x404{{?}}-bfo">{{=it.desc}}{{?it.refresh===true}}，请<a data-rel="refresh" class="refresh iconfont i-refresh-bfo">刷新重试</a>{{?}}</p></div>' + tplRepStr[3]],
+        tplRepStr = [document.body.style.hasOwnProperty('webkitBackdropFilter') ? '<header class="page-header backdrop">' : '<header class="page-header">', '</header>', '<div class="page-container">', '</div>', '<span class="page-title">{{=it.TITLE}}</span>', '<a data-rel="back" class="app-ui-icon app-icon-back icon back"></a>', '<a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"></a>', '<a data-rel="home" class="app-ui-icon app-icon-home icon home"></a>', '<span class="page-title">', '</span>'],
+        errorTpl = [tplRepStr[0] + tplRepStr[4] + tplRepStr[5] + tplRepStr[1] + tplRepStr[2] +'<div class="app-error"><p class="app-error-desc app-ui-icon app-icon-{{?it.icon}}{{=it.icon}}{{??}}x404{{?}}">{{=it.desc}}{{?it.refresh===true}}，请<a data-rel="refresh" class="refresh app-ui-icon app-icon-refresh">刷新重试</a>{{?}}</p></div>' + tplRepStr[3]],
 
         // SPA主程序
         SPA = function(container, config, routes, options) {

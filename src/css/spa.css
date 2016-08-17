@@ -1,15 +1,15 @@
 @charset "utf-8";
-@font-face{font-family:'iconfont';src:url('//at.alicdn.com/t/font_1471255906_9171424.woff') format('woff'),url('//at.alicdn.com/t/font_1471255906_9171424.ttf') format('truetype');}
-.iconfont:before,.iconfont:after{font-family:'iconfont' !important;font-style:normal;
+@font-face{font-family:'app-ui-icon';src:url('//at.alicdn.com/t/font_1471255906_9171424.woff') format('woff'),url('//at.alicdn.com/t/font_1471255906_9171424.ttf') format('truetype');}
+.app-ui-icon:before,.app-ui-icon:after{font-family:'app-ui-icon' !important;font-style:normal;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
 /* SPA */
-.i-back-bfo:before,.i-back-aft:after{content:'\e600';}
-.i-refresh-bfo:before,.i-refresh-aft:after{content:'\e601';}
-.i-wifi-error-bfo:before,.i-wifi-error-aft:after{content:'\e602';}
-.i-x404-bfo:before,.i-x404-aft:after{content:'\e603';}
-.i-debug-bfo:before,.i-debug-aft:after{content:'\e605';}
+.app-icon-back:before{content:'\e600';}
+.app-icon-refresh:before{content:'\e601';}
+.app-icon-wifi-error:before{content:'\e602';}
+.app-icon-x404:before{content:'\e603';}
+.app-icon-debug:before{content:'\e604';}
 
 /* 整体容器 */
 .app-container{position:relative;z-index:0;min-height:100vh;}
