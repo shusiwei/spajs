@@ -1,7 +1,7 @@
 {
   "name": "spajs",
   "version": "1.0.0",
-  "description": "Single Page Application Framework Dependent on jQuery and WI.js",
+  "description": "Single Page Application Framework Dependent on jQuery",
   "main": "gulpfile.js",
   "devDependencies": {
     "babel-core": "^6.13.2",

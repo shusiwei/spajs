@@ -15,34 +15,215 @@
     if (global.spajs) return global.spajs;
 
     // CMD接口
-    if (typeof define === 'function' && define.cmd) {
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery'], function($) {
+            return factory(global, $, template(global));
+        });
+    } else if (typeof define === 'function' && define.cmd) {
         define(function(require, exports, module) {
-            module.exports = factory(global, require('jquery'), require('wi'), template(global));
+            module.exports = factory(global, require('jquery'), template(global));
         });
     } else {
-        global.SPA = factory(global, global.jQuery, global.WI, template(global));
+        global.SPA = factory(global, global.jQuery, template(global));
     };
-})(window, function(global, $, WI, doT) {
+})(window, function(global, $, doT) {
     'use strict';
 
-    const // 全局对象
-        document = global.document,
-        location = global.location,
-        history = global.history,
-        sessionStorage = global.sessionStorage,
+    const isType = function(type, obj) {
+            let proto = Object.prototype.toString.call(obj).toLowerCase().slice(8, -1);
 
-        // 错误页模板
-        tplRegex = [/{{#header}}/, /{{header#}}/, /{{#container}}/, /{{container#}}/, /{{#title#}}/, /{{#back#}}/, /{{#forward#}}/, /{{#home#}}/, /{{#title}}/, /{{title#}}/],
-        tplRepStr = [document.body.style.hasOwnProperty('webkitBackdropFilter') ? '<header class="page-header backdrop">' : '<header class="page-header">', '</header>', '<div class="page-container">', '</div>', '<span class="page-title">{{=it.TITLE}}</span>', '<a data-rel="back" class="app-ui-icon app-icon-back icon back"></a>', '<a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"></a>', '<a data-rel="home" class="app-ui-icon app-icon-home icon home"></a>', '<span class="page-title">', '</span>'],
-        errorTpl = [tplRepStr[0] + tplRepStr[4] + tplRepStr[5] + tplRepStr[1] + tplRepStr[2] +'<div class="app-error"><p class="app-error-desc app-ui-icon app-icon-{{?it.icon}}{{=it.icon}}{{??}}x404{{?}}">{{=it.desc}}{{?it.refresh===true}}，请<a data-rel="refresh" class="refresh app-ui-icon app-icon-refresh">刷新重试</a>{{?}}</p></div>' + tplRepStr[3]],
+            switch (type) {
+                case 'undefined' :
+                        return obj === undefined;
+                    break;
+
+                case 'null' :
+                        return obj === null;
+                    break;
+
+                case 'object' :
+                        return obj && proto === type;
+                    break;
+
+                case 'number' :
+                case 'array' :
+                case 'string' :
+                case 'function' :
+                case 'boolean' :
+                        return proto === type;
+                    break;
+
+                default :
+                        return false;
+                    break;
+            };
+        },
+        isUndefined = function() {
+            return arguments[0] === undefined;
+        },
+        isNull = function() {
+            return arguments[0] === null;
+        },
+        isObject = function() {
+            return isType('object', arguments[0]);
+        },
+        isNumber = function() {
+            return isType('number', arguments[0]);
+        },
+        isArray = function() {
+            return isType('array', arguments[0]);
+        },
+        isString = function() {
+            return isType('string', arguments[0]);
+        },
+        isFunction = function() {
+            return isType('function', arguments[0]);
+        },
+        isBoolean = function() {
+            return isType('boolean', arguments[0]);
+        },
+        inString = function() {
+            return arguments[0].indexOf(arguments[1]) > -1;
+        },
+        defineProp = (function() {
+            let parseDescriptor = function(source) {
+                    let data = {};
+
+                    for (let key in source[1]) {
+                        Object.defineProperty(data, key, $.extend({
+                            value : source[1][key]
+                        }, source[2]));
+                    };
+
+                    return {
+                        value : data
+                    };
+                };
+
+            return function(target) {
+                for (let i = 1, length = arguments.length; i < length; i++) {
+                    for (let key in arguments[i]) {
+                        let descriptor;
+
+                        if (isObject(arguments[i][key])) {
+                            descriptor = {
+                                value : defineProp({}, arguments[i][key])
+                            };
+                        } else if (isArray(arguments[i][key]) && arguments[i][key].length === 3 && arguments[i][key][0] === 'descriptor') {
+                            if (isObject(arguments[i][key][1])) {
+                                descriptor = parseDescriptor(arguments[i][key]);
+                            } else {
+                                descriptor = $.extend({
+                                    value : arguments[i][key][1]
+                                }, arguments[i][key][2]);
+                            };
+                        } else {
+                            descriptor = {
+                                value : arguments[i][key]
+                            };
+                        };
+
+                        Object.defineProperty(target, key, descriptor);
+                    };
+                };
+
+                return target;
+            };
+        })(),
+        query2json = function() {
+            let queryStr = global.location.search.split('?').pop(),
+                queryKey;
+
+            // 如果queryStr不符合query的格式但符合key的格式，那么queryStr就代表key
+            switch (arguments.length) {
+                case 1 :
+                        if (isString(arguments[0]) && inString(arguments[0], '=')) {
+                            queryStr = arguments[0];
+                        } else if (isArray(arguments[0]) || (isString(arguments[0]) && !inString(arguments[0], '='))) {
+                            queryKey = arguments[0];
+                        };
+
+                    break;
+
+                case 2 :
+                    queryStr = arguments[0],
+                    queryKey = arguments[1];
+
+                    break;
+            };
+
+            if (!queryStr || !inString(queryStr, '=')) return null;
+
+            let data = defineProp({}, {
+                    length : ['descriptor', 0, {
+                        writable : true
+                    }]
+                });
+
+            $.each(queryStr.split('&'), function(index, param) {
+                let paramArr = param.split('=');
+                if (paramArr.length === 2) {
+                    data[paramArr[0]] = paramArr[1];
+                    data.length ++;
+                };
+            });
+
+            if (isString(queryKey)) {
+                return data[queryKey];
+            } else if (isArray(queryKey)) {
+                return (function(keyArr, result) {
+                    $.each(keyArr, function(index, name) {
+                        result[name] = data[name];
+                        result.length ++;
+                    });
+
+                    return result;
+                })(queryKey, defineProp({}, {
+                    length : ['descriptor', 0, {
+                        writable : true
+                    }]
+                }));
+            } else if (queryKey === undefined) {
+                return data;
+            };
+        },
+        getRandomStamp = (function(stampArr) {
+            return function(length, repeat) {
+                length = length || 16;
+
+                let stampLength = stampArr.length,
+                    stamp = '';
+
+                for (let i = 0; i < length; i++) {
+                    let rnd = stampArr[Math.floor(Math.random() * stampLength)];
+                    if (!repeat) {
+                        while (stamp.indexOf(rnd) === -1) stamp += rnd;
+                    } else {
+                        stamp += rnd;
+                    };
+                };
+
+                return stamp;
+            };
+        })([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']),
 
         // SPA主程序
         SPA = function(container, config, routes, options) {
             let activeView = null;
-            const self = this,
+
+            const // 全局对象
+                document = global.document,
+                location = global.location,
+                history = global.history,
+                sessionStorage = global.sessionStorage,
+
+                // 错误页模板
+                tplRegex = [/{{#header}}/, /{{header#}}/, /{{#container}}/, /{{container#}}/, /{{#title#}}/, /{{#back#}}/, /{{#forward#}}/, /{{#home#}}/, /{{#title}}/, /{{title#}}/],
+                tplRepStr = [document.body.style.hasOwnProperty('webkitBackdropFilter') ? '<header class="page-header backdrop">' : '<header class="page-header">', '</header>', '<div class="page-container">', '</div>', '<span class="page-title">{{=it.TITLE}}</span>', '<a data-rel="back" class="app-ui-icon app-icon-back icon back"></a>', '<a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"></a>', '<a data-rel="home" class="app-ui-icon app-icon-home icon home"></a>', '<span class="page-title">', '</span>'],
+                errorTpl = [tplRepStr[0] + tplRepStr[4] + tplRepStr[5] + tplRepStr[1] + tplRepStr[2] +'<div class="app-error"><p class="app-error-desc app-ui-icon app-icon-{{?it.icon}}{{=it.icon}}{{??}}x404{{?}}">{{=it.desc}}{{?it.refresh===true}}，请<a data-rel="refresh" class="refresh app-ui-icon app-icon-refresh">刷新重试</a>{{?}}</p></div>' + tplRepStr[3]],
 
                 routesKeys = Object.keys(routes),
-                storage = this.storage = options.storage || {},
+                storage = options.storage || {},
                 constant = {},
                 cache = {},
 
@@ -68,7 +249,7 @@
                             
                             // 替换模板
                             for (let j = 0, tplRegexLen = tplRegex.length; j < tplRegexLen; j++) {
-                                if (WI.has(tplStr, tplRegex[j].source)) tplStr = tplStr.replace(tplRegex[j], tplRepStr[j]);
+                                if (inString(tplStr, tplRegex[j].source)) tplStr = tplStr.replace(tplRegex[j], tplRepStr[j]);
                             };
                         };
 
@@ -148,7 +329,7 @@
                     let hashArr = hash.slice(config.HASH_LENGTH).split('?'),
                         routeName = hashArr[0],
                         search = hashArr[1] ? hashArr[1] : 'none',
-                        tempQuery = hashArr[1] ? WI.query2json(hashArr[1]) : config.SEND_HASH ? {} : null,
+                        tempQuery = hashArr[1] ? query2json(hashArr[1]) : config.SEND_HASH ? {} : null,
                         tempRoute = routeMatch(routeName, tempQuery),
                         rules = {
                             search : search,
@@ -245,37 +426,6 @@
                         if (type !== status) spinToggle(status = type);
                     };
                 })(),
-                getWebView = function(hash, source, data) {
-                    let webview,
-                        location = getLocation(hash),
-                        path = location.path,
-                        search = location.search;
-
-                    // tpl是否存在于缓存
-                    if (!cache.hasOwnProperty(path)) cache[path] = {};
-                    if (!cache[path].hasOwnProperty(search)) {
-                        webview = cache[path][search] = new WebView(location, data);
-                    } else {
-                        webview = cache[path][search];
-
-                        // 如果webview状态是暂停，则重新标注状态为"恢复"
-                        if (webview.prop.status === 'pending') webview.prop.status = 'restore';
-
-                        if (webview.prop.status === 'destroy') { // 如果此webview已经被注销
-                            // 重新创建一个webview容器并更新
-                            webview.create(data);
-                        } else if (source === 1) { // 如果此页状态还未被注销，并且此页来源于链接
-                            // 页面包含这个webview的时候，先进行销毁，避免内存泄漏,然后返回这个webview数据
-                            // 重新创建一个webview容器并更新
-                            webview.off().destroy().create(data);
-                        } else if (source === 2 && webview.route.observer === true) {
-                            webview.off().destroy().create(data);
-                        };
-                    };
-
-                    // 返回一个页面视图
-                    return webview;
-                },
                 // 过渡动画
                 transition = function(webview, title) {
                     // 更新新的视图
@@ -288,7 +438,58 @@
                     updateStatus(true);
 
                     if (options.onTransition) options.onTransition(webview);
-                },
+                };
+
+            class SPA {
+                constructor() {
+                    const self = this;
+
+                    this.define('PROJECT_NAME', config.PROJECT_NAME);
+                    this.define('PROJECT_DIR', config.PROJECT_DIR);
+                    this.define('IMG_DIR', config.IMG_DIR);
+                    this.define('JS_DIR', config.JS_DIR);
+                    this.define('HASH_PREFIX', config.HASH_PREFIX);
+
+                    // 初始化SPA，工作开始
+                    // 绑定onhashchange事件
+                    global.addEventListener('popstate', function(evt) {
+                        if (location.hash !== activeView.hash && isValidHash(location.hash)) return self.request(location.hash, 0, 2);
+                    }, false);
+
+                    // 绑定点击事件
+                    $(document.body).on('click', 'a[href^="'+ config.HASH_PREFIX +'"]', function(evt) {
+                        evt.preventDefault();
+                        return self.request(this.getAttribute('href'), this.dataset.state ? parseInt(this.dataset.state) : undefined);
+                    }).on('click', '[data-hash]', function(evt) {
+                        evt.preventDefault();
+                        return self.request(config.HASH_PREFIX + this.dataset.hash, this.dataset.state ? parseInt(this.dataset.state) : undefined);
+                    }).on('click', 'a[data-rel]', function(evt) {
+                        evt.preventDefault();
+
+                        switch (this.dataset.rel) {
+                            case 'back' :
+                                return history.back();
+
+                            case 'forward' :
+                                return history.forward();
+
+                            case 'refresh' :
+                                return self.redirect(location.hash);
+
+                            case 'home' :
+                                return self.request(config.HOME_HASH);
+                        };
+                    });
+
+                    if (options.onReady) options.onReady(this);
+
+                    // 初始化页面
+                    if (isValidHash(location.hash)) {
+                        this.request(location.hash, 0, 0);
+                    } else {
+                        this.request(config.HOME_HASH, 1);
+                    };
+                }
                 // 开始请求页面
                 // state : 拉入历史记录类型
                 //         0 ：自动添加
@@ -299,14 +500,14 @@
                 //         0：打开页面
                 //         1：链接跳转
                 //         2：历史跳转
-                request = this.request = function(hash, state, source, data) {
+                request(hash, state, source, data) {
                     // 停止上一个未完成的ajax请求
                     if (activeView) activeView.stopRequest();
 
                     // 得到并设定history接入的类型
                     state = state === undefined ? (location.hash === hash ? 0 : 2) : state;
 
-                    if (arguments.length === 3 && WI.is('object', arguments[2])) {
+                    if (arguments.length === 3 && isObject(arguments[2])) {
                         source = undefined;
                         data = arguments[2];
                     };
@@ -325,12 +526,12 @@
                     if (state === 1) history.replaceState(null, null, hash);
                     if (state === 2) history.pushState(null, null, hash);
 
-                    let webview = activeView = getWebView(hash, source === undefined ? 1 : source, data);
+                    let webview = activeView = this.getWebView(hash, source === undefined ? 1 : source, data);
                     
                     // 如果需要预先处理一点东西
                     if (webview.route.redirect) {
                         let hash = webview.route.redirect(webview, storage);
-                        if (hash) return redirect(hash);
+                        if (hash) return this.redirect(hash);
                     };
 
                     // 判断是还存在模板缓存
@@ -353,15 +554,15 @@
                             webview.runtime.tplXHR = webview.ajaxTpl();
                         };
                     };
-                },
-                redirect = this.redirect = function(hash, state, data) {
-                    request(hash, WI.is('number', state) ? state : 1, data);
-                },
+                }
+                redirect(hash, state, data) {
+                    this.request(hash, isNumber(state) ? state : 1, data);
+                }
                 // 渲染带有数据的模版视图
-                compile = this.compile = function(templ, data) {
-                    return doT.compile(templ)($.extend({}, data, define()));
-                },
-                define = this.define = function(key, value) {
+                compile(templ, data) {
+                    return doT.compile(templ)($.extend({}, data, this.define()));
+                }
+                define(key, value) {
                     switch (arguments.length) {
                         case 0 :
                             return constant;
@@ -375,20 +576,48 @@
                                 enumerable : true
                             }];
 
-                            return WI.defineProp(constant, temp, {});
+                            return defineProp(constant, temp, {});
                     };
-                };
+                }
+                getWebView(hash, source, data) {
+                    let webview,
+                        location = getLocation(hash),
+                        path = location.path,
+                        search = location.search;
 
-            define('PROJECT_NAME', config.PROJECT_NAME);
-            define('PROJECT_DIR', config.PROJECT_DIR);
-            define('IMG_DIR', config.IMG_DIR);
-            define('JS_DIR', config.JS_DIR);
-            define('HASH_PREFIX', config.HASH_PREFIX);
+                    // tpl是否存在于缓存
+                    if (!cache.hasOwnProperty(path)) cache[path] = {};
+                    if (!cache[path].hasOwnProperty(search)) {
+                        webview = cache[path][search] = new WebView(location, data, this);
+                    } else {
+                        webview = cache[path][search];
+
+                        // 如果webview状态是暂停，则重新标注状态为"恢复"
+                        if (webview.prop.status === 'pending') webview.prop.status = 'restore';
+
+                        if (webview.prop.status === 'destroy') { // 如果此webview已经被注销
+                            // 重新创建一个webview容器并更新
+                            webview.create(data);
+                        } else if (source === 1) { // 如果此页状态还未被注销，并且此页来源于链接
+                            // 页面包含这个webview的时候，先进行销毁，避免内存泄漏,然后返回这个webview数据
+                            // 重新创建一个webview容器并更新
+                            webview.off().destroy().create(data);
+                        } else if (source === 2 && webview.route.observer === true) {
+                            webview.off().destroy().create(data);
+                        };
+                    };
+
+                    // 返回一个页面视图
+                    return webview;
+                }
+            };
 
             // WebView 类
             class WebView {
-                constructor(location, data) {
-                    WI.defineProp(this, location, {
+                constructor(location, data, master) {
+                    this.master = master;
+                    this.storage = storage;
+                    defineProp(this, location, {
                         runtime : {
                             listen : [],
                             pend : [],
@@ -452,14 +681,14 @@
                 on(handler) {
                     let runtime = this.runtime;
 
-                    if (WI.is('function', handler.listen)) {
+                    if (isFunction(handler.listen)) {
                         handler.listen();
 
                         // 如果这个页面会被强制监视刷新，那么listen 数组将对此webview没有意义
                         if (this.route.observer === false) runtime.listen.push(handler.listen);
                     };
-                    if (WI.is('function', handler.pend)) runtime.pend.push(handler.pend);
-                    if (WI.is('function', handler.destroy)) runtime.destroy.push(handler.destroy);
+                    if (isFunction(handler.pend)) runtime.pend.push(handler.pend);
+                    if (isFunction(handler.destroy)) runtime.destroy.push(handler.destroy);
 
                     return this;
                 }
@@ -561,7 +790,7 @@
                         dataType : config.API_DATA_TYPE,
                         timeout : config.TIME_OUT
                     }).done(function(response) {
-                        if (WI.is('function', that.route.proxy)) response = that.route.proxy(response, that, storage, redirect);
+                        if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, storage);
 
                         if (response === undefined || response === null || response === false) {
                             return response;
@@ -610,7 +839,7 @@
                 // 应用数据
                 applyData(templ) {
                     if (!this.templ) {
-                        WI.defineProp(this, {
+                        defineProp(this, {
                             templ : cache[this.path]._tpl
                         });
                     };
@@ -618,13 +847,13 @@
                     let tempData = this.render = this.render || {},
                         tempRender = this.route.render,
                         renderData,
-                        title = cache[this.path]._title || define('PROJECT_NAME');
+                        title = cache[this.path]._title || this.master.define('PROJECT_NAME');
 
                     // 如果是一个被恢复且非监听的webview，则直接显示此webview
                     if (this.prop.status === 'restore') return transition(this, title);
 
                     // 合并得到渲染数据
-                    if (tempRender !== null) renderData = WI.is('function', tempRender) ? tempRender(tempData, this, storage) : tempRender;
+                    if (tempRender !== null) renderData = isFunction(tempRender) ? tempRender(tempData, this, storage) : tempRender;
 
                     // 渲染模板
                     this.$webview.append(this.compile(templ || this.templ[0], renderData ? $.extend(tempData, renderData) : tempData, title));
@@ -671,7 +900,7 @@
                     return this;
                 }
                 compile(templ, data, title) {
-                    return compile(templ, $.extend({
+                    return this.master.compile(templ, $.extend({
                         TITLE : title,
                         JS_FILE : this.path + config.JS_EXT_NAME
                     }, data));
@@ -684,14 +913,14 @@
                                 this.runtime.callback = null;
 
                                 // 执行页面回调
-                                callback(this, $, WI, self);
+                                callback.bind(this.master)(this.$webview, this.state, this.render, this);
                             };
                             break;
 
                         case 'ready' :
                         case 'active' :
                         case 'restore' :
-                            callback(this, $, WI, self);
+                            callback.bind(this.master)(this.$webview, this.state, this.render, this);
                             break;
                     };
                 }
@@ -726,9 +955,9 @@
                 setState() {
                     if (arguments.length === 0) {
                         return this.state;
-                    } else if (arguments.length === 1 && WI.is('string', arguments[0])) {
+                    } else if (arguments.length === 1 && isString(arguments[0])) {
                         return this.state[arguments[0]];
-                    }else if (arguments.length === 2 && WI.is('string', arguments[0])) {
+                    }else if (arguments.length === 2 && isString(arguments[0])) {
                         this.state[arguments[0]] = arguments[1];
                     } else {
                         for (let i = 0, length = arguments.length; i < length; i++) {
@@ -773,51 +1002,11 @@
                 spajs = global.spajs = {
                     version : '2.7.21',
                     exec : function(callback) {
-                        callback(activeView, $, WI, this);
-                    }.bind(this)
+                        callback(activeView);
+                    }
                 };
 
-            // 初始化SPA，工作开始
-            // 绑定onhashchange事件
-            global.addEventListener('popstate', function(evt) {
-                if (location.hash !== activeView.hash && isValidHash(location.hash)) return request(location.hash, 0, 2);
-            }, false);
-
-            // 绑定点击事件
-            $(document.body).on('click', 'a[href^="'+ config.HASH_PREFIX +'"]', function(evt) {
-                evt.preventDefault();
-                return request(this.getAttribute('href'), this.dataset.state ? parseInt(this.dataset.state) : undefined);
-            }).on('click', '[data-hash]', function(evt) {
-                evt.preventDefault();
-                return request(config.HASH_PREFIX + this.dataset.hash, this.dataset.state ? parseInt(this.dataset.state) : undefined);
-            }).on('click', 'a[data-rel]', function(evt) {
-                evt.preventDefault();
-
-                switch (this.dataset.rel) {
-                    case 'back' :
-                        return history.back();
-
-                    case 'forward' :
-                        return history.forward();
-
-                    case 'refresh' :
-                        return redirect(location.hash);
-
-                    case 'home' :
-                        return request(config.HOME_HASH);
-                };
-            });
-
-            if (options.onReady) options.onReady(this);
-
-            // 初始化页面
-            if (isValidHash(location.hash)) {
-                request(location.hash, 0, 0);
-            } else {
-                request(config.HOME_HASH, 1);
-            };
-
-            return this;
+            return new SPA();
         };
 
     SPA.config = function(project, config) {
@@ -827,7 +1016,7 @@
 
             // 项目相关信息
             PROJECT_NAME = config.name || project,
-            PROJECT_VER = config.version || WI.getRandomStamp(),
+            PROJECT_VER = config.version || getRandomStamp(),
             PROJECT_DIR = config.root ? config.root : './project/',
 
             // 页面请求相关配置
@@ -872,7 +1061,7 @@
     };
     SPA.router = function(basePath) {
         const getURI = function(uri) {
-                if (!WI.is('string', uri)) {
+                if (!isString(uri)) {
                     return null;
                 } else if (uri.indexOf('http') === 0 || uri.indexOf('//') === 0 || uri.indexOf('/') === 0) {
                     return uri;
@@ -895,32 +1084,32 @@
                     };
 
                 for (let i = 1; i < arguments.length; i++) {
-                    if (WI.is('string', arguments[i])) {
+                    if (isString(arguments[i])) {
                         if (arguments[i].slice(0, 9) === '<template') {
                             route.templ = arguments[i];
-                        } else if (WI.has(arguments[i], '=')) {
-                            route.preset = WI.query2json(arguments[i]);
+                        } else if (inString(arguments[i], '=')) {
+                            route.preset = query2json(arguments[i]);
                         } else {
                             route.uri = getURI(arguments[i]);
                         };
-                    } else if (WI.is('array', arguments[i])) {
+                    } else if (isArray(arguments[i])) {
                         let routeEscape = route.escape = {};
 
                         arguments[i].forEach(function(str) {
                             let strArr = str.split(' => ');
                             routeEscape[strArr[1]] = strArr[0];
                         });
-                    } else if (WI.is('object', arguments[i])) {
+                    } else if (isObject(arguments[i])) {
                         let options = arguments[i];
-                        if (WI.is('function', options.redirect)) route.redirect = options.redirect;
-                        if (WI.is('boolean', options.observer)) route.observer = options.observer;
-                        if (WI.is('function', options.proxy)) route.proxy = options.proxy;
+                        if (isFunction(options.redirect)) route.redirect = options.redirect;
+                        if (isBoolean(options.observer)) route.observer = options.observer;
+                        if (isFunction(options.proxy)) route.proxy = options.proxy;
                         if (options.hasOwnProperty('status')) route.status = options.status;
-                        if (WI.is('function', options.render)) route.render = options.render;
+                        if (isFunction(options.render)) route.render = options.render;
 
-                        if (WI.is('string', options.alias)) {
+                        if (isString(options.alias)) {
                             this[options.alias] = cloneRoute(route, options.alias);
-                        } else if (WI.is('array', options.alias)) {
+                        } else if (isArray(options.alias)) {
                             for (let i = 0, length = options.alias.length; i < length; i++) {
                                 this[options.alias[i]] = cloneRoute(route, options.alias[i]);
                             };
