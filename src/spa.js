@@ -223,7 +223,7 @@
                 errorTpl = [tplRepStr[0] + tplRepStr[4] + tplRepStr[5] + tplRepStr[1] + tplRepStr[2] +'<div class="app-error"><p class="app-error-desc app-ui-icon app-icon-{{?it.icon}}{{=it.icon}}{{??}}x404{{?}}">{{=it.desc}}{{?it.refresh===true}}，请<a data-rel="refresh" class="refresh app-ui-icon app-icon-refresh">刷新重试</a>{{?}}</p></div>' + tplRepStr[3]],
 
                 routesKeys = Object.keys(routes),
-                storage = options.storage || {},
+                // storage = options.storage || {},
                 constant = {},
                 cache = {},
 
@@ -444,6 +444,12 @@
                 constructor() {
                     const self = this;
 
+                    if (isObject(options.storage)) {
+                        for(let key in options.storage) {
+                            this[key] = options.storage[key];
+                        };
+                    };
+
                     this.define('PROJECT_NAME', config.PROJECT_NAME);
                     this.define('PROJECT_DIR', config.PROJECT_DIR);
                     this.define('IMG_DIR', config.IMG_DIR);
@@ -530,7 +536,7 @@
                     
                     // 如果需要预先处理一点东西
                     if (webview.route.redirect) {
-                        let hash = webview.route.redirect(webview, storage);
+                        let hash = webview.route.redirect(webview, this);
                         if (hash) return this.redirect(hash);
                     };
 
@@ -614,9 +620,7 @@
 
             // WebView 类
             class WebView {
-                constructor(location, data, master) {
-                    this.master = master;
-                    this.storage = storage;
+                constructor(location, data) {
                     defineProp(this, location, {
                         runtime : {
                             listen : [],
@@ -790,7 +794,7 @@
                         dataType : config.API_DATA_TYPE,
                         timeout : config.TIME_OUT
                     }).done(function(response) {
-                        if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, storage);
+                        if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, App);
 
                         if (response === undefined || response === null || response === false) {
                             return response;
@@ -847,13 +851,13 @@
                     let tempData = this.render = this.render || {},
                         tempRender = this.route.render,
                         renderData,
-                        title = cache[this.path]._title || this.master.define('PROJECT_NAME');
+                        title = cache[this.path]._title || App.define('PROJECT_NAME');
 
                     // 如果是一个被恢复且非监听的webview，则直接显示此webview
                     if (this.prop.status === 'restore') return transition(this, title);
 
                     // 合并得到渲染数据
-                    if (tempRender !== null) renderData = isFunction(tempRender) ? tempRender(tempData, this, storage) : tempRender;
+                    if (tempRender !== null) renderData = isFunction(tempRender) ? tempRender(tempData, this, App) : tempRender;
 
                     // 渲染模板
                     this.$webview.append(this.compile(templ || this.templ[0], renderData ? $.extend(tempData, renderData) : tempData, title));
@@ -900,7 +904,7 @@
                     return this;
                 }
                 compile(templ, data, title) {
-                    return this.master.compile(templ, $.extend({
+                    return App.compile(templ, $.extend({
                         TITLE : title,
                         JS_FILE : this.path + config.JS_EXT_NAME
                     }, data));
@@ -913,14 +917,14 @@
                                 this.runtime.callback = null;
 
                                 // 执行页面回调
-                                callback.bind(this.master)(this.$webview, this.state, this.render, this);
+                                callback.bind(App, this, this.$webview, this.state);
                             };
                             break;
 
                         case 'ready' :
                         case 'active' :
                         case 'restore' :
-                            callback.bind(this.master)(this.$webview, this.state, this.render, this);
+                            callback.bind(App, this, this.$webview, this.state);
                             break;
                     };
                 }
@@ -1004,9 +1008,10 @@
                     exec : function(callback) {
                         callback(activeView);
                     }
-                };
+                },
+                App = new SPA();
 
-            return new SPA();
+            return App;
         };
 
     SPA.config = function(project, config) {
