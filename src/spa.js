@@ -188,14 +188,15 @@
             };
         },
         getRandomStamp = (function(stampArr) {
+            let stampLen = stampArr.length;
+
             return function(length, repeat) {
                 length = length || 16;
 
-                let stampLength = stampArr.length,
-                    stamp = '';
+                let stamp = '';
 
                 for (let i = 0; i < length; i++) {
-                    let rnd = stampArr[Math.floor(Math.random() * stampLength)];
+                    let rnd = stampArr[Math.floor(Math.random() * stampLen)];
                     if (!repeat) {
                         while (stamp.indexOf(rnd) === -1) stamp += rnd;
                     } else {
@@ -205,17 +206,129 @@
 
                 return stamp;
             };
-        })([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']),
+        })([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']);
 
-        // SPA主程序
-        SPA = function(container, config, routes, options) {
+    class SPA {
+        constructor (project, config) {
+            this.project = project;
+            this.version = '3.0.0';
+
+            // 基本配置
+            let HASH_PREFIX = config.prefix || '#!',
+                HASH_LENGTH = HASH_PREFIX.length,
+
+                // 项目相关信息
+                PROJECT_NAME = config.name || this.project,
+                PROJECT_VER = config.version || getRandomStamp(),
+                PROJECT_DIR = config.root ? config.root : './project/',
+
+                // 页面请求相关配置
+                API_TYPE = config.apiType || 'post',
+                API_DATA_TYPE = config.apiDataType || 'json',
+                API_DATA = config.apiData || {},
+                TIME_OUT = config.timeout || 15e3,
+
+                // 页面资源相关配置
+                IMG_DIR = PROJECT_DIR + (config.imgDir || 'img'),
+                JS_DIR = PROJECT_DIR + (config.jsDir || 'js'),
+                TPL_DIR = PROJECT_DIR + (config.tplDir || 'tpl'),
+                TPL_EXT_NAME = config.debug === true ? '.tpl' : '-' + PROJECT_VER + '.tpl',
+                JS_EXT_NAME = config.debug === true ? '.js' : '-' + PROJECT_VER + '.js',
+
+                // 默认主页的HASH
+                HOME_HASH = HASH_PREFIX + (config.homeHash || 'index'),
+
+                // 页面自动销毁的时间
+                AUTO_DIE_TIME = config.lifeCycle || 90e3;
+
+            this.config = {
+                PROJECT_NAME,
+                PROJECT_DIR,
+                PROJECT_VER,
+                HASH_PREFIX,
+                HASH_LENGTH,
+                API_TYPE,
+                API_DATA_TYPE,
+                API_DATA,
+                IMG_DIR,
+                JS_DIR,
+                TPL_DIR : TPL_DIR + '/',
+                TPL_EXT_NAME,
+                JS_EXT_NAME,
+                HOME_HASH,
+                TIME_OUT,
+                AUTO_DIE_TIME
+            };
+        }
+        router (basePath) {
+            const getURI = function(uri) {
+                    if (!isString(uri)) {
+                        return null;
+                    } else if (uri.indexOf('http') === 0 || uri.indexOf('//') === 0 || uri.indexOf('/') === 0) {
+                        return uri;
+                    } else {
+                        return basePath + uri;
+                    };
+                },
+                cloneRoute = function(route, name) {
+                    return $.extend({}, route, {name : name});
+                };
+
+            class Router {
+                push () {
+                    let routeArr = arguments[0].split('?:'),
+                        route = this[arguments[0]] = {
+                            name : routeArr[0],
+                            param : routeArr[1] ? routeArr[1].split(':') : null,
+                            path : routeArr[1] ? arguments[0].replace(/\?/, '/').replace(/:/g, '~') : routeArr[0],
+                            uri : null
+                        };
+
+                    for (let i = 1; i < arguments.length; i++) {
+                        if (isString(arguments[i])) {
+                            if (arguments[i].slice(0, 9) === '<template') {
+                                route.templ = arguments[i];
+                            } else if (inString(arguments[i], '=')) {
+                                route.preset = query2json(arguments[i]);
+                            } else {
+                                route.uri = getURI(arguments[i]);
+                            };
+                        } else if (isArray(arguments[i])) {
+                            let routeEscape = route.escape = {};
+
+                            arguments[i].forEach(function(str) {
+                                let strArr = str.split(' => ');
+                                routeEscape[strArr[1]] = strArr[0];
+                            });
+                        } else if (isObject(arguments[i])) {
+                            let options = arguments[i];
+                            if (isFunction(options.redirect)) route.redirect = options.redirect;
+                            if (isBoolean(options.observer)) route.observer = options.observer;
+                            if (isFunction(options.proxy)) route.proxy = options.proxy;
+                            if (options.hasOwnProperty('status')) route.status = options.status;
+                            if (isFunction(options.render)) route.render = options.render;
+
+                            if (isString(options.alias)) {
+                                this[options.alias] = cloneRoute(route, options.alias);
+                            } else if (isArray(options.alias)) {
+                                for (let i = 0, length = options.alias.length; i < length; i++) {
+                                    this[options.alias[i]] = cloneRoute(route, options.alias[i]);
+                                };
+                            };
+                        };
+                    };
+
+                    return this;
+                }
+            };
+
+            return this.routes = new Router();
+        }
+        start(container, options, callback) {
             let activeView = null;
-
             const // 全局对象
-                document = global.document,
-                location = global.location,
-                history = global.history,
-                sessionStorage = global.sessionStorage,
+                [document, location, history, sessionStorage] = [global.document, global.location, global.history, global.sessionStorage],
+                [project, config, routes] = [this.project, this.config, this.routes],
 
                 // 错误页模板
                 tplRegex = [/{{#header}}/, /{{header#}}/, /{{#container}}/, /{{container#}}/, /{{#title#}}/, /{{#back#}}/, /{{#forward#}}/, /{{#home#}}/, /{{#title}}/, /{{title#}}/],
@@ -223,159 +336,9 @@
                 errorTpl = [tplRepStr[0] + tplRepStr[4] + tplRepStr[5] + tplRepStr[1] + tplRepStr[2] +'<div class="app-error"><p class="app-error-desc app-ui-icon app-icon-{{?it.icon}}{{=it.icon}}{{??}}x404{{?}}">{{=it.desc}}{{?it.refresh===true}}，请<a data-rel="refresh" class="refresh app-ui-icon app-icon-refresh">刷新重试</a>{{?}}</p></div>' + tplRepStr[3]],
 
                 routesKeys = Object.keys(routes),
-                // storage = options.storage || {},
                 constant = {},
                 cache = {},
 
-                isValidHash = function(hash) {
-                    return hash && hash.slice(0, config.HASH_LENGTH) === config.HASH_PREFIX;
-                },
-                parseTpl = function(tplStr) {
-                    let tplData = [],
-                        title;
-
-                    for (let i = 0, tplArr = tplStr.replace(/\r\n\s*/g, '').split('</template>'), tplArrLen = tplArr.length; i < tplArrLen; i++) {
-                        let tempStr = tplArr[i];
-
-                        // 如果模版字符为空，则跳过
-                        if (tempStr.length === 0) continue;
-
-                        let tmplStart = tempStr.indexOf('>') + 1,
-                            tplStr = tempStr.slice(tmplStart);
-
-                        // 获取模板主页信息
-                        if (i === 0) {
-                            title = tempStr.slice(0, tmplStart).match(/data-title="(.*)"/);
-                            
-                            // 替换模板
-                            for (let j = 0, tplRegexLen = tplRegex.length; j < tplRegexLen; j++) {
-                                if (inString(tplStr, tplRegex[j].source)) tplStr = tplStr.replace(tplRegex[j], tplRepStr[j]);
-                            };
-                        };
-
-                        tplData.push(tplStr);
-                    };
-
-                    return {
-                        tpl : tplData,
-                        title : title ? title[1] : title
-                    };
-                },
-                // 页面中是还包含有缓存模板
-                hasTpl = function(path) {
-                    return cache[path] !== undefined && cache[path]._tpl !== undefined;
-                },
-                // 路由规则匹配
-                // 系统会按定义的顺序依次匹配路由规则，一旦匹配到的话，就会定位到路由定义中的控制器和操作方法去执行（可以传入其他的参数），并且后面的规则不会继续匹配。
-                routeMatch = function(name, query) {
-                    let route;
-
-                    // 如果一个路径使用的是别名，那么就转向到真正的路由下面
-                    if (routes.hasOwnProperty(name)) name = routes[name].name;
-
-                    for (let i = 0, length = routesKeys.length; i < length; i++) {
-                        let data = routes[routesKeys[i]];
-                        
-                        if (data.name === name) {
-                            if (data.param === null) {
-                                route = data;
-                            } else if (data.param && query) {
-                                for (let i = 0, paramLength = data.param.length, length = paramLength; i < paramLength; i++) {
-                                    if (query.hasOwnProperty(data.param[i])) if (-- length === 0) {return data};
-                                };
-                            };
-                        };
-                    };
-
-                    return route;
-                },
-                queryMatch = function(temp, escapes, preset) {
-                    if (temp === null) {
-                        if (preset !== undefined) {
-                            return preset;
-                        } else {
-                            return temp;
-                        };
-                    } else {
-                        let query = {};
-
-                        // 复制一份预设
-                        if (preset !== undefined) {
-                            for (let key in preset) {
-                                query[key] = preset[key];
-                            };
-                        };
-
-                        // 转换参数名
-                        if (escapes !== undefined) {
-                            for (let key in temp) {
-                                if (escapes.hasOwnProperty(key)) {
-                                    query[escapes[key]] = temp[key];
-                                } else {
-                                    query[key] = temp[key];
-                                };
-                            };
-                        } else {
-                            for (let key in temp) {
-                                query[key] = temp[key];
-                            };
-                        };
-                        
-                        return query;
-                    };
-                },
-                // 解析HASH
-                getLocation = function(hash) {
-                    let hashArr = hash.slice(config.HASH_LENGTH).split('?'),
-                        routeName = hashArr[0],
-                        search = hashArr[1] ? hashArr[1] : 'none',
-                        tempQuery = hashArr[1] ? query2json(hashArr[1]) : config.SEND_HASH ? {} : null,
-                        tempRoute = routeMatch(routeName, tempQuery),
-                        rules = {
-                            search : search,
-                            hash : hash,
-                            query : tempQuery
-                        };
-
-                    // 如果需要发送HASH
-                    if (config.SEND_HASH === true) tempQuery.hash = hash;
-
-                    if (tempRoute === undefined) {
-                        rules.path = routeName;
-                        rules.route = {
-                            uri : null,
-                            params : ['descriptor', tempQuery, {
-                                enumerable : true
-                            }],
-                            redirect : null,
-                            proxy : null,
-                            status : 1,
-                            observer : false,
-                            render : null,
-                            templ : null
-                        };
-                    } else {
-                        rules.path = tempRoute.path;
-                        rules.route = {
-                            uri : tempRoute.uri || null,
-                            params : ['descriptor', queryMatch(tempQuery, tempRoute.escape, tempRoute.preset), {
-                                enumerable : true
-                            }],
-                            redirect : tempRoute.redirect || null,
-                            observer : tempRoute.observer || false,
-                            templ : tempRoute.templ || null,
-                            proxy : tempRoute.proxy || null,
-                            status : tempRoute.hasOwnProperty('status') ? tempRoute.status : 1,
-                            render : tempRoute.render || null
-                        };
-                    };
-                    
-                    return rules;
-                },
-                // 更新title
-                updateTitle = function(title) {
-                    document.title = title || '页面加载中…';
-                },
                 // 更新视图
                 updateView = (function() {
                     let current = null,
@@ -425,30 +388,174 @@
                     return function(type) {
                         if (type !== status) spinToggle(status = type);
                     };
-                })(),
+                })();
+
+            class WebApp {
+                static isValidHash(hash) {
+                    return hash && hash.slice(0, config.HASH_LENGTH) === config.HASH_PREFIX;
+                }
+                // 页面中是还包含有缓存模板
+                static hasTpl(path) {
+                    return cache[path] !== undefined && cache[path]._tpl !== undefined;
+                }
+                // 路由规则匹配
+                // 系统会按定义的顺序依次匹配路由规则，一旦匹配到的话，就会定位到路由定义中的控制器和操作方法去执行（可以传入其他的参数），并且后面的规则不会继续匹配。
+                static routeMatch(name, query) {
+                    let route;
+
+                    // 如果一个路径使用的是别名，那么就转向到真正的路由下面
+                    if (routes.hasOwnProperty(name)) name = routes[name].name;
+
+                    for (let i = 0, length = routesKeys.length; i < length; i++) {
+                        let data = routes[routesKeys[i]];
+                        
+                        if (data.name === name) {
+                            if (data.param === null) {
+                                route = data;
+                            } else if (data.param && query) {
+                                for (let i = 0, paramLength = data.param.length, length = paramLength; i < paramLength; i++) {
+                                    if (query.hasOwnProperty(data.param[i])) if (-- length === 0) {return data};
+                                };
+                            };
+                        };
+                    };
+
+                    return route;
+                }
+                static queryMatch(temp, escapes, preset) {
+                    if (temp === null) {
+                        if (preset !== undefined) {
+                            return preset;
+                        } else {
+                            return temp;
+                        };
+                    } else {
+                        let query = {};
+
+                        // 复制一份预设
+                        if (preset !== undefined) {
+                            for (let key in preset) {
+                                query[key] = preset[key];
+                            };
+                        };
+
+                        // 转换参数名
+                        if (escapes !== undefined) {
+                            for (let key in temp) {
+                                if (escapes.hasOwnProperty(key)) {
+                                    query[escapes[key]] = temp[key];
+                                } else {
+                                    query[key] = temp[key];
+                                };
+                            };
+                        } else {
+                            for (let key in temp) {
+                                query[key] = temp[key];
+                            };
+                        };
+                        
+                        return query;
+                    };
+                }
+                // 解析HASH
+                static parseHash(hash) {
+                    let hashArr = hash.slice(config.HASH_LENGTH).split('?'),
+                        routeName = hashArr[0],
+                        search = hashArr[1] ? hashArr[1] : 'none',
+                        tempQuery = hashArr[1] ? query2json(hashArr[1]) : null,
+                        tempRoute = WebApp.routeMatch(routeName, tempQuery),
+                        rules = {
+                            search : search,
+                            hash : hash,
+                            query : tempQuery
+                        };
+
+                    if (tempRoute === undefined) {
+                        rules.path = routeName;
+                        rules.route = {
+                            uri : null,
+                            params : ['descriptor', tempQuery, {
+                                enumerable : true
+                            }],
+                            redirect : null,
+                            proxy : null,
+                            status : 1,
+                            observer : false,
+                            render : null,
+                            templ : null
+                        };
+                    } else {
+                        rules.path = tempRoute.path;
+                        rules.route = {
+                            uri : tempRoute.uri || null,
+                            params : ['descriptor', WebApp.queryMatch(tempQuery, tempRoute.escape, tempRoute.preset), {
+                                enumerable : true
+                            }],
+                            redirect : tempRoute.redirect || null,
+                            observer : tempRoute.observer || false,
+                            templ : tempRoute.templ || null,
+                            proxy : tempRoute.proxy || null,
+                            status : tempRoute.hasOwnProperty('status') ? tempRoute.status : 1,
+                            render : tempRoute.render || null
+                        };
+                    };
+                    
+                    return rules;
+                }
+                static getWebView(hash, source, data) {
+                    let webview,
+                        location = WebApp.parseHash(hash),
+                        path = location.path,
+                        search = location.search;
+
+                    // tpl是否存在于缓存
+                    if (!cache.hasOwnProperty(path)) cache[path] = {};
+                    if (!cache[path].hasOwnProperty(search)) {
+                        webview = cache[path][search] = new WebView(location, data);
+                    } else {
+                        webview = cache[path][search];
+
+                        // 如果webview状态是暂停，则重新标注状态为"恢复"
+                        if (webview.prop.status === 'pending') webview.prop.status = 'restore';
+
+                        if (webview.prop.status === 'destroy') { // 如果此webview已经被注销
+                            // 重新创建一个webview容器并更新
+                            webview.create(data);
+                        } else if (source === 1) { // 如果此页状态还未被注销，并且此页来源于链接
+                            // 页面包含这个webview的时候，先进行销毁，避免内存泄漏,然后返回这个webview数据
+                            // 重新创建一个webview容器并更新
+                            webview.off().destroy().create(data);
+                        } else if (source === 2 && webview.route.observer === true) {
+                            webview.off().destroy().create(data);
+                        };
+                    };
+
+                    // 返回一个页面视图
+                    return webview;
+                }
+                // 更新title
+                static updateTitle(title) {
+                    document.title = title || '页面加载中…';
+                }
                 // 过渡动画
-                transition = function(webview, title) {
+                static transition(webview, title) {
                     // 更新新的视图
                     updateView(webview);
 
                     // 更新页面title
-                    updateTitle(title);
+                    WebApp.updateTitle(title);
 
                     // 启用页面状态
                     updateStatus(true);
 
-                    if (options.onTransition) options.onTransition(webview);
-                };
-
-            class SPA {
+                    if (callback.onTransition) callback.onTransition(webview, App);
+                }
                 constructor() {
                     const self = this;
 
-                    if (isObject(options.storage)) {
-                        for(let key in options.storage) {
-                            this[key] = options.storage[key];
-                        };
-                    };
+                    if (isObject(options)) for (let key in options) this[key] = options[key];
+
+                    this.version = config.PROJECT_VER;
 
                     this.define('PROJECT_NAME', config.PROJECT_NAME);
                     this.define('PROJECT_DIR', config.PROJECT_DIR);
@@ -459,7 +566,7 @@
                     // 初始化SPA，工作开始
                     // 绑定onhashchange事件
                     global.addEventListener('popstate', function(evt) {
-                        if (location.hash !== activeView.hash && isValidHash(location.hash)) return self.request(location.hash, 0, 2);
+                        if (location.hash !== activeView.hash && WebApp.isValidHash(location.hash)) return self.request(location.hash, 0, 2);
                     }, false);
 
                     // 绑定点击事件
@@ -487,10 +594,10 @@
                         };
                     });
 
-                    if (options.onReady) options.onReady(this);
+                    if (callback.onReady) callback.onReady(this);
 
                     // 初始化页面
-                    if (isValidHash(location.hash)) {
+                    if (WebApp.isValidHash(location.hash)) {
                         this.request(location.hash, 0, 0);
                     } else {
                         this.request(config.HOME_HASH, 1);
@@ -519,11 +626,11 @@
                     };
 
                     // 如果此浏览窗口第一次打开页面且此页面非主页，那么将主页HASH替换成第一页HASH
-                    if (source === 0 && sessionStorage.getItem(config.PROJECT) === null) {
+                    if (source === 0 && sessionStorage.getItem(project) === null) {
                         // 把首页HASH替换当前历史记录
                         history.replaceState(null, null, config.HOME_HASH);
                         // 记录此浏览器窗口为首次打开页面
-                        sessionStorage.setItem(config.PROJECT, true);
+                        sessionStorage.setItem(project, true);
 
                         // 当首页HASH替换当前历史记录后，重新插入当前页的历史记录
                         if (hash !== config.HOME_HASH) history.pushState(null, null, hash);
@@ -532,7 +639,7 @@
                     if (state === 1) history.replaceState(null, null, hash);
                     if (state === 2) history.pushState(null, null, hash);
 
-                    let webview = activeView = this.getWebView(hash, source === undefined ? 1 : source, data);
+                    let webview = activeView = WebApp.getWebView(hash, source === undefined ? 1 : source, data);
                     
                     // 如果需要预先处理一点东西
                     if (webview.route.redirect) {
@@ -541,7 +648,7 @@
                     };
 
                     // 判断是还存在模板缓存
-                    if (hasTpl(webview.path)) {
+                    if (WebApp.hasTpl(webview.path)) {
                         if (webview.route.uri === null || webview.prop.status === 'restore') {
                             webview.applyData();
                         } else {
@@ -585,41 +692,44 @@
                             return defineProp(constant, temp, {});
                     };
                 }
-                getWebView(hash, source, data) {
-                    let webview,
-                        location = getLocation(hash),
-                        path = location.path,
-                        search = location.search;
-
-                    // tpl是否存在于缓存
-                    if (!cache.hasOwnProperty(path)) cache[path] = {};
-                    if (!cache[path].hasOwnProperty(search)) {
-                        webview = cache[path][search] = new WebView(location, data, this);
-                    } else {
-                        webview = cache[path][search];
-
-                        // 如果webview状态是暂停，则重新标注状态为"恢复"
-                        if (webview.prop.status === 'pending') webview.prop.status = 'restore';
-
-                        if (webview.prop.status === 'destroy') { // 如果此webview已经被注销
-                            // 重新创建一个webview容器并更新
-                            webview.create(data);
-                        } else if (source === 1) { // 如果此页状态还未被注销，并且此页来源于链接
-                            // 页面包含这个webview的时候，先进行销毁，避免内存泄漏,然后返回这个webview数据
-                            // 重新创建一个webview容器并更新
-                            webview.off().destroy().create(data);
-                        } else if (source === 2 && webview.route.observer === true) {
-                            webview.off().destroy().create(data);
-                        };
-                    };
-
-                    // 返回一个页面视图
-                    return webview;
+                exec(callback) {
+                    callback(activeView, this)
                 }
             };
 
             // WebView 类
             class WebView {
+                static parseTpl(tplStr) {
+                    let tplData = [],
+                        title;
+
+                    for (let i = 0, tplArr = tplStr.replace(/\r\n\s*/g, '').split('</template>'), tplArrLen = tplArr.length; i < tplArrLen; i++) {
+                        let tempStr = tplArr[i];
+
+                        // 如果模版字符为空，则跳过
+                        if (tempStr.length === 0) continue;
+
+                        let tmplStart = tempStr.indexOf('>') + 1,
+                            tplStr = tempStr.slice(tmplStart);
+
+                        // 获取模板主页信息
+                        if (i === 0) {
+                            title = tempStr.slice(0, tmplStart).match(/data-title="(.*)"/);
+                            
+                            // 替换模板
+                            for (let j = 0, tplRegexLen = tplRegex.length; j < tplRegexLen; j++) {
+                                if (inString(tplStr, tplRegex[j].source)) tplStr = tplStr.replace(tplRegex[j], tplRepStr[j]);
+                            };
+                        };
+
+                        tplData.push(tplStr);
+                    };
+
+                    return {
+                        tpl : tplData,
+                        title : title ? title[1] : title
+                    };
+                }
                 constructor(location, data) {
                     defineProp(this, location, {
                         runtime : {
@@ -766,7 +876,6 @@
                 stopRequest(desc, icon, refresh) {
                     // 禁用/恢复页面状态
                     updateStatus(desc ? true : false);
-                    updateTitle();
 
                     if (this.runtime.tplXHR) this.runtime.tplXHR.abort();
                     if (this.runtime.dataXHR) this.runtime.dataXHR.abort();
@@ -854,7 +963,7 @@
                         title = cache[this.path]._title || App.define('PROJECT_NAME');
 
                     // 如果是一个被恢复且非监听的webview，则直接显示此webview
-                    if (this.prop.status === 'restore') return transition(this, title);
+                    if (this.prop.status === 'restore') return WebApp.transition(this, title);
 
                     // 合并得到渲染数据
                     if (tempRender !== null) renderData = isFunction(tempRender) ? tempRender(tempData, this, App) : tempRender;
@@ -863,7 +972,7 @@
                     this.$webview.append(this.compile(templ || this.templ[0], renderData ? $.extend(tempData, renderData) : tempData, title));
 
                     // 执行过渡动画
-                    transition(this, title);
+                    WebApp.transition(this, title);
                 }
                 // ajax回来新的模板
                 ajaxTpl() {
@@ -893,7 +1002,7 @@
                 }
                 applyTpl(tplStr) {
                     // 得到模板代码并生成模板节点
-                    let tplData = parseTpl(tplStr);
+                    let tplData = WebView.parseTpl(tplStr);
 
                     // 将模版节点缓存
                     cache[this.path]._tpl = tplData.tpl;
@@ -917,14 +1026,14 @@
                                 this.runtime.callback = null;
 
                                 // 执行页面回调
-                                callback.bind(App, this, this.$webview, this.state);
+                                callback(App, this);
                             };
                             break;
 
                         case 'ready' :
                         case 'active' :
                         case 'restore' :
-                            callback.bind(App, this, this.$webview, this.state);
+                            callback(App, this);
                             break;
                     };
                 }
@@ -974,159 +1083,39 @@
             };
 
             // 内存控制器
-            const GC = (function(memoryArr) {
-                    let interval = 45e2,
-                        GCHanlder = function(index, webview) {
-                            if (webview && webview.prop.status === 'pending') {
-                                if (webview.prop.timer >= config.AUTO_DIE_TIME + (webview.prop.count * interval)) {
-                                    webview.off().destroy();
-                                } else {
-                                    webview.prop.timer += interval;
+            const GC = new class {
+                    constructor () {
+                        let trashArr = this.trashArr = [],
+                            interval = 45e2,
+                            GCHanlder = function(index, webview) {
+                                if (webview && webview.prop.status === 'pending') {
+                                    if (webview.prop.timer >= config.AUTO_DIE_TIME + (webview.prop.count * interval)) {
+                                        webview.off().destroy();
+                                    } else {
+                                        webview.prop.timer += interval;
+                                    };
                                 };
-                            };
-                        },
-                        GCInterval = function() {
-                            for (let i = 0, length = memoryArr.length; i < length; i++) {
-                                GCHanlder(i, memoryArr[i]);
-                            };
-                        },
-                        GCTimer = setInterval(GCInterval, interval);
-
-                        return {
-                            push : function(webview) {
-                                memoryArr.push(webview);
-                                return webview;
                             },
-                            remove : function(webview) {
-                                memoryArr.splice(memoryArr.indexOf(webview), 1);
-                                return webview;
-                            }
-                        };
-                })([]),
-                spajs = global.spajs = {
-                    version : '2.7.21',
-                    exec : function(callback) {
-                        callback(activeView);
+                            GCInterval = function() {
+                                for (let i = 0, length = trashArr.length; i < length; i++) {
+                                    GCHanlder(i, trashArr[i]);
+                                };
+                            },
+                            GCTimer = setInterval(GCInterval, interval);
+                    }
+                    push(webview) {
+                        this.trashArr.push(webview);
+                        return webview;
+                    }
+                    remove(webview) {
+                        this.trashArr.splice(this.trashArr.indexOf(webview), 1);
+                        return webview;
                     }
                 },
-                App = new SPA();
+                App = this.App = global.App = new WebApp();
 
-            return App;
-        };
-
-    SPA.config = function(project, config) {
-        // 基本配置
-        let HASH_PREFIX = config.prefix || '#!',
-            HASH_LENGTH = HASH_PREFIX.length,
-
-            // 项目相关信息
-            PROJECT_NAME = config.name || project,
-            PROJECT_VER = config.version || getRandomStamp(),
-            PROJECT_DIR = config.root ? config.root : './project/',
-
-            // 页面请求相关配置
-            API_TYPE = config.apiType || 'post',
-            API_DATA_TYPE = config.apiDataType || 'json',
-            API_DATA = config.apiData || {},
-            TIME_OUT = config.timeout || 15e3,
-            SEND_HASH = config.sendHash || false,
-
-            // 页面资源相关配置
-            IMG_DIR = PROJECT_DIR + (config.imgDir || 'img'),
-            JS_DIR = PROJECT_DIR + (config.jsDir || 'js'),
-            TPL_DIR = PROJECT_DIR + (config.tplDir || 'tpl'),
-            TPL_EXT_NAME = PROJECT_VER === '{{version}}' ? '.tpl' : '-' + PROJECT_VER + '.tpl',
-            JS_EXT_NAME = PROJECT_VER === '{{version}}' ? '.js' : '-' + PROJECT_VER + '.js',
-
-            // 默认主页的HASH
-            HOME_HASH = HASH_PREFIX + (config.homeHash || 'index'),
-
-            // 页面自动销毁的时间
-            AUTO_DIE_TIME = config.lifeCycle || 90e3;
-
-        return {
-            PROJECT : project,
-            PROJECT_NAME,
-            PROJECT_DIR,
-            HASH_PREFIX,
-            HASH_LENGTH,
-            API_TYPE,
-            API_DATA_TYPE,
-            API_DATA,
-            SEND_HASH,
-            IMG_DIR,
-            JS_DIR,
-            TPL_DIR : TPL_DIR + '/',
-            TPL_EXT_NAME,
-            JS_EXT_NAME,
-            HOME_HASH,
-            TIME_OUT,
-            AUTO_DIE_TIME
-        };
-    };
-    SPA.router = function(basePath) {
-        const getURI = function(uri) {
-                if (!isString(uri)) {
-                    return null;
-                } else if (uri.indexOf('http') === 0 || uri.indexOf('//') === 0 || uri.indexOf('/') === 0) {
-                    return uri;
-                } else {
-                    return basePath + uri;
-                };
-            },
-            cloneRoute = function(route, name) {
-                return $.extend({}, route, {name : name});
-            };
-
-        class Router {
-            push () {
-                let routeArr = arguments[0].split('?:'),
-                    route = this[arguments[0]] = {
-                        name : routeArr[0],
-                        param : routeArr[1] ? routeArr[1].split(':') : null,
-                        path : routeArr[1] ? arguments[0].replace(/\?/, '/').replace(/:/g, '~') : routeArr[0],
-                        uri : null
-                    };
-
-                for (let i = 1; i < arguments.length; i++) {
-                    if (isString(arguments[i])) {
-                        if (arguments[i].slice(0, 9) === '<template') {
-                            route.templ = arguments[i];
-                        } else if (inString(arguments[i], '=')) {
-                            route.preset = query2json(arguments[i]);
-                        } else {
-                            route.uri = getURI(arguments[i]);
-                        };
-                    } else if (isArray(arguments[i])) {
-                        let routeEscape = route.escape = {};
-
-                        arguments[i].forEach(function(str) {
-                            let strArr = str.split(' => ');
-                            routeEscape[strArr[1]] = strArr[0];
-                        });
-                    } else if (isObject(arguments[i])) {
-                        let options = arguments[i];
-                        if (isFunction(options.redirect)) route.redirect = options.redirect;
-                        if (isBoolean(options.observer)) route.observer = options.observer;
-                        if (isFunction(options.proxy)) route.proxy = options.proxy;
-                        if (options.hasOwnProperty('status')) route.status = options.status;
-                        if (isFunction(options.render)) route.render = options.render;
-
-                        if (isString(options.alias)) {
-                            this[options.alias] = cloneRoute(route, options.alias);
-                        } else if (isArray(options.alias)) {
-                            for (let i = 0, length = options.alias.length; i < length; i++) {
-                                this[options.alias[i]] = cloneRoute(route, options.alias[i]);
-                            };
-                        };
-                    };
-                };
-
-                return this;
-            }
-        };
-
-        return new Router();
+            return this;
+        }
     };
 
     return SPA;
