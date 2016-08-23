@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="target-densitydpi=device-dpi">
+  <meta name="HandheldFriendly" content="true">
+  <link rel="canonical" href="http://underscorejs.org/">
+  <title>spa.js(3.0.0) 中文文档</title>
+  <style>
+    body{font-size:14px;line-height:22px;background-color:#f4f4f4;color:#000;font-family:"Helvetica Neue","Microsoft Yahei",Helvetica,Arial;}
+    .interface{font-family:"Lucida Grande","Lucida Sans Unicode",Helvetica,Arial,sans-serif !important;}
+    div#sidebar{background:#fff;position:fixed;top:0;left:0;bottom:0;width:200px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:15px 0 30px 30px;border-right:1px solid #bbb;box-shadow:0 0 20px #ccc;-webkit-box-shadow:0 0 20px #ccc;-moz-box-shadow:0 0 20px #ccc;}
+    a.toc_title,a.toc_title:visited{display:block;color:black;font-weight:bold;margin-top:15px;}
+    a.toc_title:hover{text-decoration:underline;}
+    #sidebar .version{font-size:10px;font-weight:normal;}
+    ul.toc_section{font-size:11px;line-height:14px;margin:5px 0 0 0;padding-left:0px;list-style-type:none;font-family:Lucida Grande,"Microsoft Yahei";}
+    .toc_section li{cursor:pointer;margin:0 0 3px 0;}
+    .toc_section li a{text-decoration:none;color:black;}
+    .toc_section li a:hover{text-decoration:underline;}
+    div.container{width:728px;margin:40px 0 50px 260px;}
+    div.warning{margin-top:15px;font:bold 11px Arial;color:#770000;}
+    p{margin:20px 0;width:728px;}
+    a,a:visited{color:#444;}
+    a:active,a:hover{color:#000;}
+    h1,h2,h3,h4,h5,h6{padding-top:20px;}
+    h2{font-size:20px;}
+    b.header{font-size:16px;line-height:30px;}
+    span.alias{font-size:14px;font-style:italic;margin-left:20px;}
+    table,tr,td{margin:0;padding:0;}
+    td{padding:2px 12px 2px 0;}
+    table .rule{height:1px;background:#ccc;margin:5px 0;}
+    ul{list-style-type:circle;padding:0 0 0 20px;}
+    li{margin-bottom:10px;}
+    code,pre,tt{font-family:Monaco,Consolas,"Lucida Console","Microsoft Yahei",monospace;font-size:12px;line-height:20px;font-style:normal;}
+    tt{padding:0px 3px;background:#fff;border:1px solid #ddd;zoom:1;}
+    code{margin-left:20px;}
+    pre{font-size:12px;padding:2px 0 2px 15px;border-left:5px solid #bbb;margin:0px 0 30px;}
+    pre>i{color:#888;}
+    pre>b{color:#f00;font-weight:bold;}
+    @media only screen and (-webkit-min-device-pixel-ratio:1.5) and (max-width:640px),only screen and (-o-min-device-pixel-ratio:3/2) and (max-width:640px),only screen and (min-device-pixel-ratio:1.5) and (max-width:640px){
+        img{max-width:100%;}
+        div#sidebar{-webkit-overflow-scrolling:initial;position:relative;width:90%;height:120px;left:0;top:-7px;padding:10px 0 10px 30px;border:0;}
+        div.container{margin:0;width:100%;}
+        p,div.container ul{max-width:98%;overflow-x:scroll;}pre{overflow:scroll;}
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar" class="interface">
+    <a class="toc_title" href="#">
+      spa.js <span class="version">(3.0.0)</span>
+    </a>
+    <ul class="toc_section">
+      <li>» <a href="https://github.com/shusiwei/spajs">GitHub 仓库</a></li>
+    </ul>
+    <a class="toc_title" href="#">
+      介绍(Introduction)
+    </a>
+    <ul class="toc_section">
+      <li>- <a href="#each">each</a></li>
+    </ul>
+    <a class="toc_title" href="#changelog">
+      更新日志(Change Log)
+    </a>
+  </div>
+  <div class="container">
+    <p><a href="https://github.com/shusiwei/spajs">spa.js</a>一个SPA（Single Page Application）单页应用框架。</p>
+    <p>spajs模板引擎使用<a href="http://olado.github.io/doT/">doT.js</a></p>
+    <p>该项目代码<a href="https://github.com/shusiwei/spajs">托管在GitHub</a>上。</p>
+    <div class="installation">
+      <h2>安装（Installation）</h2>
+      <ul>
+        <li>
+          <b>git</b> <tt>git clone https://github.com/shusiwei/spajs.git</tt>
+        </li>
+        <li>
+          <b>bower</b> <tt>bower install --save shusiwei/spajs</tt>
+        </li>
+      </ul>
+    </div>
+    <div class="use">
+      <h2>使用（Use）</h2>
+      <p>页面引入</p>
+      <pre>
+&lt;script type="text/javascript" src="./js/spa.js"&gt;&lt;/script&gt;
+</pre>
+      <p>AMD&CMD</p>
+      <pre>
+// 加载SPA模块
+var SPA = require('spa');
+</pre>
+      <p>初始化</p>
+      <pre>
+// 构建SPA应用
+var APP = new SPA(project, config);
+
+// 构建路由
+var routes = APP.router(basePath);
+
+// 添加路由规则
+routes.push(routeName[, escape, preset, uri, templ, options]);
+
+// 应用开始
+APP.start(container, storage[, callback]);
+</pre>
+      <p>结果</p>
+      <pre>
+APP = {
+  App : new WebApp = {
+    ......(storage)<i>// 全局存储</i>,
+    request(hash, state, source, data),
+    redirect(hash, state, data),
+    compile(templ, data),
+    define(key, value),
+    exec(callback)
+  },
+  project : project,
+  version : '3.0.0',
+  routes : new Router = {
+    'routeNameA' : {...},
+    'routeNameB' : {...},
+    'routeNameC' : {...}
+  } 
+}
+</pre>
+    </div>
+    <div id="documentation">
+      <h2 id="collections">class SPA （SPA 类）</h2>
+      <h3>constructor (构造函数)</h3>
+      <pre>
+  constructor(project, config);
+
+  var <b>APP</b> = new SPA('project_name', {});
+
+  * project = string <i>// 项目名称（英文）</i>
+  * config = {
+      prefix : string ['#!'] <i>// hash前缀</i>
+      * name : string <i>// 项目名称（中文）</i>
+      * version : 'string' <i>// 版本号 [a.b.c]</i>
+      root : string ['./project/'] <i>// 项目根目录</i>
+      apiType : string ['post'] <i>// 接口方法['post'/'get']</i>
+      apiDataType : string ['json'] <i>// 接口数据类型</i>
+      apiData : object [{}] <i>// 默认传输的数据</i>
+      timeout : number [15000] <i>// 接口超时时间</i>
+      imgDir : string [root + 'img'] <i>// 图片根目录</i>
+      jsDir : string [root + 'js'] <i>// JS根目录</i>
+      tplDir : string [root + 'tpl'] <i>// 模板根目录</i>
+      * debug : boolean <i>// 是否为debug模式</i>
+      lifeCycle : number [90e3] <i>// 页面生命周期</i>
+    }
+</pre>
+      <h3>router (路由)</h3>
+      <pre>
+  router(basePath);
+
+  var <b>routes</b> = <b>APP</b>.router('http://api.domain.com/');
+
+  * basePath = string ['/'] <i>// 接口根目录</i>
+
+  返回一个路由集合对象 <b>routes</b>，路由中的相对路径的API地址都会默认在前面加上 'http://api.domain.com/';
+</pre>
+      <p>路由规则</p>
+      <p>路由集合对象提供push方法可以增加新的路由规则，没有定义路由也能访问hash解析的页面</p>
+      <pre>
+  <b>routes</b>.push(routeName[, uri, escape, preset, options]);
+
+  * routeName = string <i>// 路由路径 [路径 : 'news/article' 或 路径+参数 : 'news/article?:id'] 按参数多少匹配，由少至多匹配</i>
+  uri = string <i>// api地址 ['list.php']，支持相对&绝对</i>
+  escape = array <i>// 参数转换 ['apiParam => urlParam', 'apiParam1 => urlParam1']，如url为 #!id=18，escape = ['shop_id => id']，那么在接口中会以 'api.php?shop_id=18' 的形式传参</i>
+  preset = string <i>// 参数预设 ['key=value&key=value']，如：url为 #!id=18&a=9，preset = 'a=1&b=2'，那么在接口中会以 'api.php?id=18&a=9&b=2' 的形式传参</i>
+  options = { <i>// 其它选项</i>
+    observer : boolean [false] <i>// 永远保持强制刷新</i>
+    redirect : function(webview, App) <i>// 重定向</i>
+    proxy : function(result, webview, App) <i>// 数据代理</i>
+    render ：function(render, webview, App) <i>// 渲染数据重组</i>
+    status : * <i>// 重定义页面正确的数据状态码</i>
+    alias : string/array <i>// 路由别名 ['a', 'old/a']</i>
+  }
+</pre>
+      <h3>start （开始）</h3>
+      <p>执行此方法，SPA开始构建App，并加载显示页面</p>
+      <pre>
+  <b>APP</b>.start(container, storage, callback);
+
+  * container = element <i>// webview容器</i>
+  * storage = object <i>// App全局存储</i>
+  callback = { <i>// 回调</i>
+    onReady : function(App) <i>// 初始化成功</i>
+    onTransition : function(webview, App) <i>// 页面跳转回调</i>
+  }
+</pre>
+      <h2 id="changelog">Change Log</h2>
+        <p id="3.0.0">
+          <b class="header">3.0.0</b> — <small><i>2016.8.24</i></small>
+        </p>
+        <ul>
+          <li>新增一个<tt>_.create</tt> 方法, 作为<tt>Object.create</tt>的一个简化版本。</li>
+        </ul>
+    </div>
+  </div>
+</body>
+</html>

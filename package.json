@@ -1,6 +1,6 @@
 {
   "name": "spajs",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Single Page Application Framework Dependent on jQuery",
   "main": "gulpfile.js",
   "devDependencies": {

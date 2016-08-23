@@ -260,7 +260,7 @@
                 AUTO_DIE_TIME
             };
         }
-        router (basePath) {
+        router (basePath = '/') {
             const getURI = function(uri) {
                     if (!isString(uri)) {
                         return null;
@@ -324,7 +324,7 @@
 
             return this.routes = new Router();
         }
-        start(container, options, callback) {
+        start(container, options, callback = {}) {
             let activeView = null;
             const // 全局对象
                 [document, location, history, sessionStorage] = [global.document, global.location, global.history, global.sessionStorage],
