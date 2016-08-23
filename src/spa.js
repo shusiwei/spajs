@@ -324,7 +324,7 @@
 
             return this.routes = new Router();
         }
-        start(container, options, callback = {}) {
+        start(container, storage = {}, callback = {}) {
             let activeView = null;
             const // 全局对象
                 [document, location, history, sessionStorage] = [global.document, global.location, global.history, global.sessionStorage],
