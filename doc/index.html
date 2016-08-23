@@ -80,6 +80,12 @@
         </li>
       </ul>
     </div>
+    <div class="info">
+      <h2>阅读说明</h2>
+      <p><tt>function(a, b[, c, d])</tt> // 参数a, b 为必要参数，c, d为可选参数</p>
+      <p><tt>a = string ['app']</tt> // 参数a的数据类型为 string , 默认参数为'app'</p>
+      <p>// 路由别名 [<tt>'route/a', 'route/old/a'</tt>] // 参数书写范例（仅限 [ ] 括号中的内容）</p>
+    </div>
     <div class="use">
       <h2>使用（Use）</h2>
       <p>页面引入</p>
@@ -176,16 +182,16 @@ APP = {
     proxy : function(result, webview, App) <i>// 数据代理</i>
     render ：function(render, webview, App) <i>// 渲染数据重组</i>
     status : * <i>// 重定义页面正确的数据状态码</i>
-    alias : string/array <i>// 路由别名 ['a', 'old/a']</i>
+    alias : string/array <i>// 路由别名 ['route/a', 'route/old/a']</i>
   }
 </pre>
       <h3>start （开始）</h3>
       <p>执行此方法，SPA开始构建App，并加载显示页面</p>
       <pre>
-  <b>APP</b>.start(container, storage, callback);
+  <b>APP</b>.start(container[, storage, callback]);
 
   * container = element <i>// webview容器</i>
-  * storage = object <i>// App全局存储</i>
+  storage = object <i>// App全局存储</i>
   callback = { <i>// 回调</i>
     onReady : function(App) <i>// 初始化成功</i>
     onTransition : function(webview, App) <i>// 页面跳转回调</i>
@@ -196,7 +202,7 @@ APP = {
           <b class="header">3.0.0</b> — <small><i>2016.8.24</i></small>
         </p>
         <ul>
-          <li>新增一个<tt>_.create</tt> 方法, 作为<tt>Object.create</tt>的一个简化版本。</li>
+          <!-- <li>新增一个<tt>_.create</tt> 方法, 作为<tt>Object.create</tt>的一个简化版本。</li> -->
         </ul>
     </div>
   </div>
