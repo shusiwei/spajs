@@ -275,44 +275,43 @@
                 };
 
             class Router {
-                push () {
-                    let routeArr = arguments[0].split('?:'),
-                        route = this[arguments[0]] = {
+                push (name, ...options) {
+                    let routeArr = name.split('?:'),
+                        route = this[name] = {
                             name : routeArr[0],
                             param : routeArr[1] ? routeArr[1].split(':') : null,
                             path : routeArr[1] ? arguments[0].replace(/\?/, '/').replace(/:/g, '~') : routeArr[0],
                             uri : null
                         };
 
-                    for (let i = 1; i < arguments.length; i++) {
-                        if (isString(arguments[i])) {
-                            if (arguments[i].slice(0, 9) === '<template') {
-                                route.templ = arguments[i];
-                            } else if (inString(arguments[i], '=')) {
-                                route.preset = query2json(arguments[i]);
+                    for (let option of options) {
+                        if (isString(option)) {
+                            if (option.slice(0, 9) === '<template') {
+                                route.templ = option;
+                            } else if (inString(option, '=')) {
+                                route.preset = query2json(option);
                             } else {
-                                route.uri = getURI(arguments[i]);
+                                route.uri = getURI(option);
                             };
-                        } else if (isArray(arguments[i])) {
+                        } else if (isArray(option)) {
                             let routeEscape = route.escape = {};
 
-                            arguments[i].forEach(function(str) {
+                            for (let str of option) {
                                 let strArr = str.split(' => ');
                                 routeEscape[strArr[1]] = strArr[0];
-                            });
-                        } else if (isObject(arguments[i])) {
-                            let options = arguments[i];
-                            if (isFunction(options.redirect)) route.redirect = options.redirect;
-                            if (isBoolean(options.observer)) route.observer = options.observer;
-                            if (isFunction(options.proxy)) route.proxy = options.proxy;
-                            if (options.hasOwnProperty('status')) route.status = options.status;
-                            if (isFunction(options.render)) route.render = options.render;
+                            };
+                        } else if (isObject(option)) {
+                            if (isFunction(option.redirect)) route.redirect = option.redirect;
+                            if (isBoolean(option.observer)) route.observer = option.observer;
+                            if (isFunction(option.proxy)) route.proxy = option.proxy;
+                            if (option.hasOwnProperty('status')) route.status = option.status;
+                            if (isFunction(option.render)) route.render = option.render;
 
-                            if (isString(options.alias)) {
-                                this[options.alias] = cloneRoute(route, options.alias);
-                            } else if (isArray(options.alias)) {
-                                for (let i = 0, length = options.alias.length; i < length; i++) {
-                                    this[options.alias[i]] = cloneRoute(route, options.alias[i]);
+                            if (isString(option.alias)) {
+                                this[option.alias] = cloneRoute(route, option.alias);
+                            } else if (isArray(option.alias)) {
+                                for (let alias of option.alias) {
+                                    this[alias] = cloneRoute(route, alias);
                                 };
                             };
                         };
@@ -406,15 +405,17 @@
                     // 如果一个路径使用的是别名，那么就转向到真正的路由下面
                     if (routes.hasOwnProperty(name)) name = routes[name].name;
 
-                    for (let i = 0, length = routesKeys.length; i < length; i++) {
-                        let data = routes[routesKeys[i]];
-                        
+                    for (let key of routesKeys) {
+                        let data = routes[key];
+
                         if (data.name === name) {
                             if (data.param === null) {
                                 route = data;
                             } else if (data.param && query) {
-                                for (let i = 0, paramLength = data.param.length, length = paramLength; i < paramLength; i++) {
-                                    if (query.hasOwnProperty(data.param[i])) if (-- length === 0) {return data};
+                                let length = data.param.length;
+
+                                for (let param of data.param) {
+                                    if (query.hasOwnProperty(param)) if (-- length === 0) {return data};
                                 };
                             };
                         };
@@ -548,12 +549,12 @@
                     // 启用页面状态
                     updateStatus(true);
 
-                    if (callback.onTransition) callback.onTransition(webview, App);
+                    if (callback.onTransition) callback.onTransition(webview, self);
                 }
                 constructor() {
                     const self = this;
 
-                    if (isObject(options)) for (let key in options) this[key] = options[key];
+                    if (isObject(storage)) for (let key in storage) this[key] = storage[key];
 
                     this.version = config.PROJECT_VER;
 
@@ -733,8 +734,8 @@
                 constructor(location, data) {
                     defineProp(this, location, {
                         runtime : {
-                            listen : [],
-                            pend : [],
+                            enter : [],
+                            leave : [],
                             destroy : [],
                             callback : ['descriptor', null, {
                                 writable : true
@@ -792,42 +793,59 @@
 
                     return GC.push(this);
                 }
-                on(handler) {
+                on(type, fn) {
                     let runtime = this.runtime;
 
-                    if (isFunction(handler.listen)) {
-                        handler.listen();
+                    if (arguments.length === 2) {
+                        switch (type) {
+                            case 'enter' :
+                                fn();
+                                runtime.enter.push(fn);
+                                break;
 
-                        // 如果这个页面会被强制监视刷新，那么listen 数组将对此webview没有意义
-                        if (this.route.observer === false) runtime.listen.push(handler.listen);
+                            case 'leave' :
+                                runtime.leave.push(fn);
+                                break;
+
+                            case 'die' :
+                                runtime.destroy.push(fn);
+                                break;
+                        };
+                    } else {
+                        if (isFunction(arguments[0].listen)) {
+                            arguments[0].listen();
+
+                            // 如果这个页面会被强制监视刷新，那么enter 数组将对此webview没有意义
+                            if (this.route.observer === false) runtime.enter.push(arguments[0].listen);
+                        };
+                        if (isFunction(arguments[0].pend)) runtime.leave.push(arguments[0].pend);
+                        if (isFunction(arguments[0].destroy)) runtime.destroy.push(arguments[0].destroy);
                     };
-                    if (isFunction(handler.pend)) runtime.pend.push(handler.pend);
-                    if (isFunction(handler.destroy)) runtime.destroy.push(handler.destroy);
 
                     return this;
                 }
                 off() {
                     let runtime = this.runtime,
-                        pendArr = runtime.pend,
-                        listenArr = runtime.listen,
-                        pendArrLen = pendArr.length;
+                        leaveArr = runtime.leave,
+                        enterArr = runtime.enter;
 
                     // 运行runtime中的注销，并移除相关的runtime事件
                     // 挂起页面事件
-                    for (let i = 0; i < pendArrLen; i++) {
-                        pendArr[i]();
+                    for (let leaveFn of leaveArr) {
+                        leaveFn();
                     };
-                    pendArr.splice(0, pendArrLen);
+
+                    leaveArr.splice(0, leaveArr.length);
 
                     // 如果这个页面会没有强制监视，则需要移除页面监听方法数组
-                    if (this.route.observer === false) listenArr.splice(0, listenArr.length);
+                    if (this.route.observer === false) enterArr.splice(0, enterArr.length);
 
                     return this;
                 }
                 pause() {
                     // 暂停webview
-                    for (let i = 0, pendArr = this.runtime.pend, pendArrLen = pendArr.length; i < pendArrLen; i++) {
-                        pendArr[i]();
+                    for (let leaveFn of this.runtime.leave) {
+                        leaveFn();
                     };
 
                     // webview改变状态为暂停
@@ -845,13 +863,13 @@
                 }
                 destroy(deep) {
                     // 销毁webview
-                    let destroyArr = this.runtime.destroy,
-                        destroyArrLen = destroyArr.length;
+                    let destroyArr = this.runtime.destroy;
 
-                    for (let i = 0; i < destroyArrLen; i++) {
-                        destroyArr[i]();
+                    for (let destroyFn of destroyArr) {
+                        destroyFn();
                     };
-                    destroyArr.splice(0, destroyArrLen);
+
+                    destroyArr.splice(0, destroyArr.length);
 
                     // 从页面中移除
                     this.$webview.remove();
@@ -903,7 +921,7 @@
                         dataType : config.API_DATA_TYPE,
                         timeout : config.TIME_OUT
                     }).done(function(response) {
-                        if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, App);
+                        if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, self);
 
                         if (response === undefined || response === null || response === false) {
                             return response;
@@ -960,13 +978,13 @@
                     let tempData = this.render = this.render || {},
                         tempRender = this.route.render,
                         renderData,
-                        title = cache[this.path]._title || App.define('PROJECT_NAME');
+                        title = cache[this.path]._title || self.define('PROJECT_NAME');
 
                     // 如果是一个被恢复且非监听的webview，则直接显示此webview
                     if (this.prop.status === 'restore') return WebApp.transition(this, title);
 
                     // 合并得到渲染数据
-                    if (tempRender !== null) renderData = isFunction(tempRender) ? tempRender(tempData, this, App) : tempRender;
+                    if (tempRender !== null) renderData = isFunction(tempRender) ? tempRender(tempData, this, self) : tempRender;
 
                     // 渲染模板
                     this.$webview.append(this.compile(templ || this.templ[0], renderData ? $.extend(tempData, renderData) : tempData, title));
@@ -1013,7 +1031,7 @@
                     return this;
                 }
                 compile(templ, data, title) {
-                    return App.compile(templ, $.extend({
+                    return self.compile(templ, $.extend({
                         TITLE : title,
                         JS_FILE : this.path + config.JS_EXT_NAME
                     }, data));
@@ -1026,14 +1044,14 @@
                                 this.runtime.callback = null;
 
                                 // 执行页面回调
-                                callback(App, this);
+                                callback(self, this);
                             };
                             break;
 
                         case 'ready' :
                         case 'active' :
                         case 'restore' :
-                            callback(App, this);
+                            callback(self, this);
                             break;
                     };
                 }
@@ -1050,8 +1068,8 @@
                         global.scrollTo(0, this.prop.scrollY);
 
                         // 如果该webview非强制监视刷新，则在恢复后重新监听（强制监视刷新会在新开页面时执行监听）
-                        for (let i = 0, listenArr = this.runtime.listen, listenArrLen = listenArr.length; i < listenArrLen; i++) {
-                            listenArr[i]();
+                        for (let enterFn of this.runtime.enter) {
+                            enterFn();
                         };
                     } else {
                         global.scrollTo(0, 0);
@@ -1073,8 +1091,8 @@
                     }else if (arguments.length === 2 && isString(arguments[0])) {
                         this.state[arguments[0]] = arguments[1];
                     } else {
-                        for (let i = 0, length = arguments.length; i < length; i++) {
-                            $.extend(this.state, arguments[0]);
+                        for (let object of arguments) {
+                            $.extend(this.state, object);
                         };
                     };
 
@@ -1087,7 +1105,7 @@
                     constructor () {
                         let trashArr = this.trashArr = [],
                             interval = 45e2,
-                            GCHanlder = function(index, webview) {
+                            GCHanlder = function(webview) {
                                 if (webview && webview.prop.status === 'pending') {
                                     if (webview.prop.timer >= config.AUTO_DIE_TIME + (webview.prop.count * interval)) {
                                         webview.off().destroy();
@@ -1097,8 +1115,8 @@
                                 };
                             },
                             GCInterval = function() {
-                                for (let i = 0, length = trashArr.length; i < length; i++) {
-                                    GCHanlder(i, trashArr[i]);
+                                for (let webview of trashArr) {
+                                    GCHanlder(webview);
                                 };
                             },
                             GCTimer = setInterval(GCInterval, interval);
@@ -1112,7 +1130,7 @@
                         return webview;
                     }
                 },
-                App = this.App = global.App = new WebApp();
+                self = this.controller = global.App = new WebApp();
 
             return this;
         }

@@ -49,28 +49,38 @@
 </head>
 <body>
   <div id="sidebar" class="interface">
-    <a class="toc_title" href="#">
-      spa.js <span class="version">(3.0.0)</span>
-    </a>
+    <a class="toc_title" href="#">spa.js <span class="version">(3.0.0)</span></a>
     <ul class="toc_section">
       <li>» <a href="https://github.com/shusiwei/spajs">GitHub 仓库</a></li>
     </ul>
-    <a class="toc_title" href="#">
-      介绍(Introduction)
-    </a>
+    <a class="toc_title" href="#introduction">介绍</a>
+    <a class="toc_title" href="#read">阅读说明</a>
+    <a class="toc_title" href="#installation">安装</a>
+    <a class="toc_title" href="#use">使用</a>
+    <a class="toc_title" href="#spa">class SPA</a>
     <ul class="toc_section">
-      <li>- <a href="#each">each</a></li>
+      <li>» <a href="#constructor">构造函数</a></li>
+      <li>» <a href="#router">路由</a></li>
+      <li>» <a href="#start">开始</a></li>
     </ul>
-    <a class="toc_title" href="#changelog">
-      更新日志(Change Log)
-    </a>
+    <a class="toc_title" href="#controller">应用控制器</a>
+    <a class="toc_title" href="#webview">页面视图</a>
+    <a class="toc_title" href="#template">模板</a>
+    <a class="toc_title" href="#template">变更日志</a>
   </div>
-  <div class="container">
+  <div class="container" id="introduction">
     <p><a href="https://github.com/shusiwei/spajs">spa.js</a>一个SPA（Single Page Application）单页应用框架。</p>
+    <p>spajs依赖于jQuery3</p>
     <p>spajs模板引擎使用<a href="http://olado.github.io/doT/">doT.js</a></p>
     <p>该项目代码<a href="https://github.com/shusiwei/spajs">托管在GitHub</a>上。</p>
-    <div class="installation">
-      <h2>安装（Installation）</h2>
+    <div id="read">
+      <h2>阅读说明</h2>
+      <p><tt>function(a, b[, c, d])</tt> // 参数a, b 为必要参数，c, d为可选参数</p>
+      <p><tt>a = string ['app']</tt> // 参数a的数据类型为 string , 默认参数为'app'</p>
+      <p>// 路由别名 [<tt>'route/a', 'route/old/a'</tt>] // 参数书写范例（仅限 [ ] 括号中的内容）</p>
+    </div>
+    <div class="installation" id="installation">
+      <h2>安装</h2>
       <ul>
         <li>
           <b>git</b> <tt>git clone https://github.com/shusiwei/spajs.git</tt>
@@ -80,21 +90,16 @@
         </li>
       </ul>
     </div>
-    <div class="info">
-      <h2>阅读说明</h2>
-      <p><tt>function(a, b[, c, d])</tt> // 参数a, b 为必要参数，c, d为可选参数</p>
-      <p><tt>a = string ['app']</tt> // 参数a的数据类型为 string , 默认参数为'app'</p>
-      <p>// 路由别名 [<tt>'route/a', 'route/old/a'</tt>] // 参数书写范例（仅限 [ ] 括号中的内容）</p>
-    </div>
-    <div class="use">
+    <div id="use">
       <h2>使用（Use）</h2>
       <p>页面引入</p>
       <pre>
-&lt;script type="text/javascript" src="./js/spa.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" type="text/css" href="../js/spa.css"&gt;&lt;/link&gt; <i>// 引入样式</i>
+&lt;script type="text/javascript" src="./js/spa.js"&gt;&lt;/script&gt; <i>// 引入JS文件</i>
 </pre>
       <p>AMD&CMD</p>
       <pre>
-// 加载SPA模块
+// 引入SPA模块
 var SPA = require('spa');
 </pre>
       <p>初始化</p>
@@ -133,8 +138,8 @@ APP = {
 </pre>
     </div>
     <div id="documentation">
-      <h2 id="collections">class SPA （SPA 类）</h2>
-      <h3>constructor (构造函数)</h3>
+      <h2 id="spa">class SPA （SPA 类）</h2>
+      <h3 id="constructor">constructor (构造函数)</h3>
       <pre>
   constructor(project, config);
 
@@ -157,7 +162,7 @@ APP = {
       lifeCycle : number [90e3] <i>// 页面生命周期</i>
     }
 </pre>
-      <h3>router (路由)</h3>
+      <h3 id="router">router (路由)</h3>
       <pre>
   router(basePath);
 
@@ -178,14 +183,24 @@ APP = {
   preset = string <i>// 参数预设 ['key=value&key=value']，如：url为 #!id=18&a=9，preset = 'a=1&b=2'，那么在接口中会以 'api.php?id=18&a=9&b=2' 的形式传参</i>
   options = { <i>// 其它选项</i>
     observer : boolean [false] <i>// 永远保持强制刷新</i>
-    redirect : function(webview, App) <i>// 重定向</i>
-    proxy : function(result, webview, App) <i>// 数据代理</i>
-    render ：function(render, webview, App) <i>// 渲染数据重组</i>
+    redirect : function(webview, App) { <i>// 重定向</i>
+      return '#!new/hash/url' <i>// 返回重定向的地址</i>
+    }
+    proxy : function(result, webview, App) { <i>// API数据代理</i>
+      ... <i>// 代码块</i>
+    }
+    render ：function(render, webview, App) { <i>// 渲染数据重组</i>
+      ... <i>// 代码块</i>
+
+      return { <i>// 返回的对象，此对象最终会与API传回的数据合并</i>
+        key : value
+      }
+    }
     status : * <i>// 重定义页面正确的数据状态码</i>
     alias : string/array <i>// 路由别名 ['route/a', 'route/old/a']</i>
   }
 </pre>
-      <h3>start （开始）</h3>
+      <h3 id="start">start （开始）</h3>
       <p>执行此方法，SPA开始构建App，并加载显示页面</p>
       <pre>
   <b>APP</b>.start(container[, storage, callback]);
@@ -197,12 +212,120 @@ APP = {
     onTransition : function(webview, App) <i>// 页面跳转回调</i>
   }
 </pre>
+      <h2 id="controller">APP.controller(window.App) 应用控制器</h2>
+      <p>SPA构建后最终得到的是controller对象，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法</p>
+      <p>controller提供了一些方法</p>
+      <pre>
+  controller.compile(templ[, data]) <i>// 渲染将一个模板字符串转代为html字符串</i>
+  <i>如 ：</i> controller.compile('模板字符串', {渲染数据});
+
+  * templ = string <i>// 模板字符串</i>
+  data = object <i>// 渲染数据</i>
+</pre>
+      <pre>
+  controller.define([key, value]) <i>// 定义一个值</i>
+  <i>如 ：</i> controller.define('name', 'uhuibao'); <i>// {name : 'uhuibao'}</i>
+
+  * key = string <i>// 值的名称</i>
+  * value = * <i>// 保存的值</i>
+  <i>// 如果没有参数，则得到整个被保存的数据</i>
+      </pre>
+      <pre>
+  controller.exec(callback) <i>// 回调一个传入webview对象的函数</i>
+  <i>如 ：</i> controller.exec(function(webview) {});
+
+  * callback = function <i>// 值的名称</i>
+</pre>
+      <pre>
+  controller.request(hash[, state, source, data]) <i>// 请求一个新的页面</i>
+  <i>如 ：</i> controller.request('#!index');
+
+  * hash = string <i>// 带有hash的url地址</i>
+  state = number [当hash等于当前的hash的时候，默认值为 0，否则为 1 <i>// 拉入历史记录类型，0:自动 1:替换历史 2:拉入历史 3:不拉入历史</i>
+  source = number <i>// 页面跳转类型 0:打开页面 1:链接跳转 2:历史跳转</i>
+  data = object <i>// 页面默认的渲染数据</i>
+</pre>
+      <pre>
+  controller.redirect(hash[, state, data]) <i>// 为页面做一个次url重定向跳转</i>
+  <i>如 ：</i> controller.redirect('#!index');
+
+  * hash = string <i>// 带有hash的url地址</i>
+  state = number [1] <i>// 此参数参考controller.request</i>
+  data = object <i>// 此参数参考controller.request</i>
+</pre>
+      <h2 id="webview">WebView 页面视图</h2>
+      <p>spajs中，很个页面都是独立的webview对象，webview基于WebView类构建</p>
+      <p>webview保存着页面中的所有信息</p>
+      <pre>
+  $webview : jQuery DOM <i>// 页面容器</i>
+  hash : string <i>// 页面的hash地址</i>
+  path : string <i>// 页面的路径</i>
+  prop : { <i>// 页面中的静态属性</i>
+    count : 0 <i>// 页面打开次数</i>
+    scrollY : 0 <i>// 滚动条位置</i>
+    status : "active" <i>// 页面状态</i>
+    timer : 0 <i>// 页面挂起后的计时</i>
+  }
+  query : object/null <i>// 页面url中的参数，如果没有参数，则为null</i>
+  render : object <i>// 渲染页面的数据</i>
+  route : object <i>// 页面使用的路由规则，请参考<b>Router</b></i>
+  runtime : {
+    callback : function(App, webview) <i>// 页面加载完的回调函数</i>
+    dataXHR : xhr <i>// 数据加载xhr对象</i>
+    destroy : Array <i>// 页面销毁时执行的函数集合</i>
+    enter : Array <i>// 页面进入时执行的函数集合</i>
+    leave : Array <i>// 页面离开时执行的函数集合</i>
+    tplXHR : xhr <i>// 模板加载xhr对象</i>
+  }
+  search : string ['none'] <i>// 页面url中的参数字符串</i>
+  state : object <i>// 页面数据储存，每次页面销毁时此对象也将被销毁</i>
+  templ : array <i>// 页面包含的模版字符串</i>
+</pre>
+      <p>webview提供了一此操作页面的方法</p>
+      <pre>
+  webview.on(type, handler) <i>// 页面事件绑定，分别是页面显示时，页面挂起时，页面销毁时</i>
+
+  * type = string <i>// webview绑定的事件，enter:页面进入时 leave:页面挂起时 die:页面销毁时</i>
+  * fn = function <i>// 出发事件后执行的函数</i>
+</pre>
+      <pre>
+  webview.setState([key, value]) <i>// 为webview.state设直一个值</i>
+  <i>如</i> webview.setState('name', 'uhuibao');
+  <i>如</i> webview.setState('name'); <i>// 'uhuibao'</i>
+  <i>如</i> webview.setState({a : 1, b : 2}); <i>// {name : 'uhuibao', a : 1, b : 2}</i>
+  <i>如</i> webview.setState({a : 3, b : 4}, {c : 5, d : 6}); <i>// {name : 'uhuibao', a : 3, b : 4, c : 5, d : 6}</i>
+  <i>如</i> webview.setState(); <i>// {name : 'uhuibao', a : 3, b : 4, c : 5, d : 6}</i>
+
+  key = string/object <i>// 值的名称，当key是一个对象时，则保存整个对象，同时此方法后面的参数也只能为1个或多个对象，当key是一个字符串时，value为要保存的值，如果value参数没有，则返回webview.state[key]的值</i>
+  value = * <i>// 保存的值</i>
+  <i>// 如果没有任何参数时，则返回整个webview.state</i>
+</pre>
+      <h2 id="template">Template 模板</h2>
+      <p>spajs模板引擎使用<a href="http://olado.github.io/doT/">doT.js</a></p>
+      <p>页面中的链接可以使用两种方式</p>
+      <pre>
+  &lt;a href="#!index"&gt;
+  &lt;a data-hash="index"&gt;
+</pre>
+      <p>页面链接可以定义拉入历史记录类型 <i>// 参考 APP.controller.request 方法</i></p>
+      <pre>
+  &lt;a data-hash="index" data-sate="3"&gt;
+</pre>
+      <p>SPA默认暴露的渲染数据有</p>
+      <pre>
+  {{=it.PROJECT_NAME}} <i>// 项目名称</i>
+  {{=it.PROJECT_DIR}} <i>// 项目目录</i>
+  {{=it.IMG_DIR}} <i>// 图像目录</i>
+  {{=it.JS_DIR}} <i>// JS目录</i>
+  {{=it.HASH_PREFIX}} <i>// hash前缀</i>
+</pre>
       <h2 id="changelog">Change Log</h2>
         <p id="3.0.0">
           <b class="header">3.0.0</b> — <small><i>2016.8.24</i></small>
         </p>
         <ul>
-          <!-- <li>新增一个<tt>_.create</tt> 方法, 作为<tt>Object.create</tt>的一个简化版本。</li> -->
+          <li>基于ES6的代码重组</li>
+          <li>变更了webview.on方法</li>
         </ul>
     </div>
   </div>
