@@ -213,7 +213,7 @@ APP = {
   }
 </pre>
       <h2 id="controller">APP.controller(window.App) 应用控制器</h2>
-      <p>SPA构建后最终得到的是controller对象，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法</p>
+      <p>SPA构建后最终得到的是controller对象，controller基于WebApp类构建，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法</p>
       <p>controller提供了一些方法</p>
       <pre>
   controller.compile(templ[, data]) <i>// 渲染将一个模板字符串转代为html字符串</i>
