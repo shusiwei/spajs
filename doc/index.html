@@ -322,6 +322,20 @@ APP = {
   {{=it.JS_DIR}} <i>// JS目录</i>
   {{=it.HASH_PREFIX}} <i>// hash前缀</i>
 </pre>
+      <p>自定义的模版标签有</p>
+      <pre>
+  {{#header}} <i>// 生成 &lt;header class="page-header backdrop"&gt;&lt;/header&gt;</i>
+  {{#container}} <i>// &lt;div class="page-container"&gt;&lt;/div&gt;</i>
+  {{#title#}} <i>// &lt;span class="page-title"&gt;{{=it.TITLE}}&lt;/span&gt;</i>
+  {{#title}}{{title#}} <i>// &lt;span class="page-title"&gt;&lt;/span&gt;</i>
+  {{#back#}} <i>// &lt;a data-rel="back" class="app-ui-icon app-icon-back icon back"&gt;&lt;/a&gt;</i>
+  {{#forward#}} <i>// &lt;a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"&gt;&lt;/a&gt;</i>
+  {{#home#}} <i>// &lt;a data-rel="home" class="app-ui-icon app-icon-home icon home"&gt;&lt;/a&gt;</i>
+</pre>
+      <p>template 标签属性</p>
+      <pre>
+  &lt;template data-title="标题文字"&gt; <i>// 页面标题</i>
+</pre>
       <h2 id="api">API 接口</h2>
       <p>spajs 数据基于接口 ajax，接口返回的数据必须遵守以下格式，key名的修改请参照 <a href="#spa">SPA 构造函数</a></p>
       <pre>
