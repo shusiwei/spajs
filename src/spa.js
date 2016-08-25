@@ -29,61 +29,45 @@
 })(window, function(global, $, doT) {
     'use strict';
 
-    const isType = function(type, obj) {
-            let proto = Object.prototype.toString.call(obj).toLowerCase().slice(8, -1);
+    const isType = function(type, object) {
+            let proto = Object.prototype.toString.call(object).toLowerCase().slice(8, -1);
 
             switch (type) {
-                case 'undefined' :
-                        return obj === undefined;
-                    break;
-
-                case 'null' :
-                        return obj === null;
-                    break;
-
                 case 'object' :
-                        return obj && proto === type;
-                    break;
-
-                case 'number' :
-                case 'array' :
-                case 'string' :
-                case 'function' :
-                case 'boolean' :
-                        return proto === type;
+                        return object && proto === type;
                     break;
 
                 default :
-                        return false;
+                        return proto === type;
                     break;
             };
         },
-        isUndefined = function() {
-            return arguments[0] === undefined;
+        isUndefined = function(value) {
+            return value === undefined;
         },
-        isNull = function() {
-            return arguments[0] === null;
+        isNull = function(value) {
+            return value === null;
         },
-        isObject = function() {
-            return isType('object', arguments[0]);
+        isObject = function(value) {
+            return isType('object', value);
         },
-        isNumber = function() {
-            return isType('number', arguments[0]);
+        isNumber = function(value) {
+            return isType('number', value);
         },
-        isArray = function() {
-            return isType('array', arguments[0]);
+        isArray = function(value) {
+            return isType('array', value);
         },
-        isString = function() {
-            return isType('string', arguments[0]);
+        isString = function(value) {
+            return isType('string', value);
         },
-        isFunction = function() {
-            return isType('function', arguments[0]);
+        isFunction = function(value) {
+            return isType('function', value);
         },
-        isBoolean = function() {
-            return isType('boolean', arguments[0]);
+        isBoolean = function(value) {
+            return isType('boolean', value);
         },
-        inString = function() {
-            return arguments[0].indexOf(arguments[1]) > -1;
+        inString = function(value, match) {
+            return value.indexOf(match) > -1;
         },
         defineProp = (function() {
             let parseDescriptor = function(source) {
@@ -183,30 +167,10 @@
                         writable : true
                     }]
                 }));
-            } else if (queryKey === undefined) {
+            } else if (isUndefined(queryKey)) {
                 return data;
             };
-        },
-        getRandomStamp = (function(stampArr) {
-            let stampLen = stampArr.length;
-
-            return function(length, repeat) {
-                length = length || 16;
-
-                let stamp = '';
-
-                for (let i = 0; i < length; i++) {
-                    let rnd = stampArr[Math.floor(Math.random() * stampLen)];
-                    if (!repeat) {
-                        while (stamp.indexOf(rnd) === -1) stamp += rnd;
-                    } else {
-                        stamp += rnd;
-                    };
-                };
-
-                return stamp;
-            };
-        })([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']);
+        };
 
     class SPA {
         constructor (project, config) {
@@ -219,7 +183,7 @@
 
                 // 项目相关信息
                 PROJECT_NAME = config.name || this.project,
-                PROJECT_VER = config.version || getRandomStamp(),
+                PROJECT_VER = config.version,
                 PROJECT_DIR = config.root ? config.root : './project/',
 
                 // 页面请求相关配置
@@ -350,7 +314,7 @@
                     let current = null,
                         clear = function(webview) {
                             // 当页面为第一次载入或页面进入死循环跳转的时候
-                            if (current === null || current === webview) return webview;
+                            if (isNull(current) || current === webview) return webview;
 
                             current.pause();
 
@@ -416,7 +380,7 @@
                         let data = routes[key];
 
                         if (data.name === name) {
-                            if (data.param === null) {
+                            if (isNull(data.param)) {
                                 route = data;
                             } else if (data.param && query) {
                                 let length = data.param.length;
@@ -431,7 +395,7 @@
                     return route;
                 }
                 static queryMatch(temp, escapes, preset) {
-                    if (temp === null) {
+                    if (isNull(temp)) {
                         if (preset !== undefined) {
                             return preset;
                         } else {
@@ -478,7 +442,7 @@
                             query : tempQuery
                         };
 
-                    if (tempRoute === undefined) {
+                    if (isUndefined(tempRoute)) {
                         rules.path = routeName;
                         rules.route = {
                             uri : null,
@@ -626,7 +590,7 @@
                     if (activeView) activeView.stopRequest();
 
                     // 得到并设定history接入的类型
-                    state = state === undefined ? (location.hash === hash ? 0 : 2) : state;
+                    state = isUndefined(state) ? (location.hash === hash ? 0 : 2) : state;
 
                     if (arguments.length === 3 && isObject(arguments[2])) {
                         source = undefined;
@@ -634,7 +598,7 @@
                     };
 
                     // 如果此浏览窗口第一次打开页面且此页面非主页，那么将主页HASH替换成第一页HASH
-                    if (source === 0 && sessionStorage.getItem(project) === null) {
+                    if (source === 0 && isNull(sessionStorage.getItem(project))) {
                         // 把首页HASH替换当前历史记录
                         history.replaceState(null, null, HOME_HASH);
                         // 记录此浏览器窗口为首次打开页面
@@ -647,7 +611,7 @@
                     if (state === 1) history.replaceState(null, null, hash);
                     if (state === 2) history.pushState(null, null, hash);
 
-                    let webview = activeView = WebApp.getWebView(hash, source === undefined ? 1 : source, data);
+                    let webview = activeView = WebApp.getWebView(hash, isUndefined(source) ? 1 : source, data);
                     
                     // 如果需要预先处理一点东西
                     if (webview.route.redirect) {
@@ -657,7 +621,7 @@
 
                     // 判断是还存在模板缓存
                     if (WebApp.hasTpl(webview.path)) {
-                        if (webview.route.uri === null || webview.prop.status === 'restore') {
+                        if (isNull(webview.route.uri) || webview.prop.status === 'restore') {
                             webview.applyData();
                         } else {
                             // 请求页面数据
@@ -670,7 +634,7 @@
                         if (webview.route.templ) {
                             // 应用路由中的模板字符串
                             webview.applyTpl(webview.route.templ).checkRequest();
-                        } else if (webview.route.templ === null) {
+                        } else if (isNull(webview.route.templ)) {
                             // 请求回来新的模板
                             webview.runtime.tplXHR = webview.ajaxTpl();
                         };
@@ -919,9 +883,9 @@
                     }).done(function(response) {
                         if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, self);
 
-                        if (response === undefined || response === null || response === false) {
+                        if (isUndefined(response) || isNull(response) || response === false) {
                             return response;
-                        } else if (response[API_CODE_KEY] === undefined) {
+                        } else if (isUndefined(response[API_CODE_KEY])) {
                             that.stopRequest('返回的数据无status');
                         } else if (response[API_CODE_KEY] === (that.route.status || 1)) {
                             if (response[API_DATA_KEY].status === 0) return that.stopRequest('您访问的页面不存在');
