@@ -226,6 +226,9 @@
                 API_TYPE = config.apiType || 'post',
                 API_DATA_TYPE = config.apiDataType || 'json',
                 API_DATA = config.apiData || {},
+                API_DATA_KEY = config.apiDataKey || 'data',
+                API_MSG_KEY = config.apiMsgKey || 'msg',
+                API_CODE_KEY = config.apiCodeKey || 'status',
                 TIME_OUT = config.timeout || 15e3,
 
                 // 页面资源相关配置
@@ -250,6 +253,9 @@
                 API_TYPE,
                 API_DATA_TYPE,
                 API_DATA,
+                API_DATA_KEY,
+                API_MSG_KEY,
+                API_CODE_KEY,
                 IMG_DIR,
                 JS_DIR,
                 TPL_DIR : TPL_DIR + '/',
@@ -327,7 +333,8 @@
             let activeView = null;
             const // 全局对象
                 [document, location, history, sessionStorage] = [global.document, global.location, global.history, global.sessionStorage],
-                [project, config, routes] = [this.project, this.config, this.routes],
+                [project, routes] = [this.project, this.routes],
+                {PROJECT_NAME, PROJECT_DIR, PROJECT_VER, HASH_PREFIX, HASH_LENGTH, API_TYPE, API_DATA_TYPE, API_DATA, API_DATA_KEY, API_MSG_KEY, API_CODE_KEY, IMG_DIR, JS_DIR, TPL_DIR, TPL_EXT_NAME, JS_EXT_NAME, HOME_HASH, TIME_OUT, AUTO_DIE_TIME} = this.config,
 
                 // 错误页模板
                 tplRegex = [/{{#header}}/, /{{header#}}/, /{{#container}}/, /{{container#}}/, /{{#title#}}/, /{{#back#}}/, /{{#forward#}}/, /{{#home#}}/, /{{#title}}/, /{{title#}}/],
@@ -391,7 +398,7 @@
 
             class WebApp {
                 static isValidHash(hash) {
-                    return hash && hash.slice(0, config.HASH_LENGTH) === config.HASH_PREFIX;
+                    return hash && hash.slice(0, HASH_LENGTH) === HASH_PREFIX;
                 }
                 // 页面中是还包含有缓存模板
                 static hasTpl(path) {
@@ -460,7 +467,7 @@
                 }
                 // 解析HASH
                 static parseHash(hash) {
-                    let hashArr = hash.slice(config.HASH_LENGTH).split('?'),
+                    let hashArr = hash.slice(HASH_LENGTH).split('?'),
                         routeName = hashArr[0],
                         search = hashArr[1] ? hashArr[1] : 'none',
                         tempQuery = hashArr[1] ? query2json(hashArr[1]) : null,
@@ -556,13 +563,13 @@
 
                     if (isObject(storage)) for (let key in storage) this[key] = storage[key];
 
-                    this.version = config.PROJECT_VER;
+                    this.version = PROJECT_VER;
 
-                    this.define('PROJECT_NAME', config.PROJECT_NAME);
-                    this.define('PROJECT_DIR', config.PROJECT_DIR);
-                    this.define('IMG_DIR', config.IMG_DIR);
-                    this.define('JS_DIR', config.JS_DIR);
-                    this.define('HASH_PREFIX', config.HASH_PREFIX);
+                    this.define('PROJECT_NAME', PROJECT_NAME);
+                    this.define('PROJECT_DIR', PROJECT_DIR);
+                    this.define('IMG_DIR', IMG_DIR);
+                    this.define('JS_DIR', JS_DIR);
+                    this.define('HASH_PREFIX', HASH_PREFIX);
 
                     // 初始化SPA，工作开始
                     // 绑定onhashchange事件
@@ -571,12 +578,12 @@
                     }, false);
 
                     // 绑定点击事件
-                    $(document.body).on('click', 'a[href^="'+ config.HASH_PREFIX +'"]', function(evt) {
+                    $(document.body).on('click', 'a[href^="'+ HASH_PREFIX +'"]', function(evt) {
                         evt.preventDefault();
                         return self.request(this.getAttribute('href'), this.dataset.state ? parseInt(this.dataset.state) : undefined);
                     }).on('click', '[data-hash]', function(evt) {
                         evt.preventDefault();
-                        return self.request(config.HASH_PREFIX + this.dataset.hash, this.dataset.state ? parseInt(this.dataset.state) : undefined);
+                        return self.request(HASH_PREFIX + this.dataset.hash, this.dataset.state ? parseInt(this.dataset.state) : undefined);
                     }).on('click', 'a[data-rel]', function(evt) {
                         evt.preventDefault();
 
@@ -591,7 +598,7 @@
                                 return self.redirect(location.hash);
 
                             case 'home' :
-                                return self.request(config.HOME_HASH);
+                                return self.request(HOME_HASH);
                         };
                     });
 
@@ -601,7 +608,7 @@
                     if (WebApp.isValidHash(location.hash)) {
                         this.request(location.hash, 0, 0);
                     } else {
-                        this.request(config.HOME_HASH, 1);
+                        this.request(HOME_HASH, 1);
                     };
                 }
                 // 开始请求页面
@@ -629,12 +636,12 @@
                     // 如果此浏览窗口第一次打开页面且此页面非主页，那么将主页HASH替换成第一页HASH
                     if (source === 0 && sessionStorage.getItem(project) === null) {
                         // 把首页HASH替换当前历史记录
-                        history.replaceState(null, null, config.HOME_HASH);
+                        history.replaceState(null, null, HOME_HASH);
                         // 记录此浏览器窗口为首次打开页面
                         sessionStorage.setItem(project, true);
 
                         // 当首页HASH替换当前历史记录后，重新插入当前页的历史记录
-                        if (hash !== config.HOME_HASH) history.pushState(null, null, hash);
+                        if (hash !== HOME_HASH) history.pushState(null, null, hash);
                     };
                     
                     if (state === 1) history.replaceState(null, null, hash);
@@ -905,25 +912,25 @@
 
                     return $.ajax({
                         url : this.route.uri,
-                        type : config.API_TYPE,
-                        data : this.route.params ? $.extend({}, this.route.params, config.API_DATA) : config.API_DATA,
-                        dataType : config.API_DATA_TYPE,
-                        timeout : config.TIME_OUT
+                        type : API_TYPE,
+                        data : this.route.params ? $.extend({}, this.route.params, API_DATA) : API_DATA,
+                        dataType : API_DATA_TYPE,
+                        timeout : TIME_OUT
                     }).done(function(response) {
                         if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, self);
 
                         if (response === undefined || response === null || response === false) {
                             return response;
-                        } else if (response.status === undefined) {
+                        } else if (response[API_CODE_KEY] === undefined) {
                             that.stopRequest('返回的数据无status');
-                        } else if (response.status === (that.route.status || 1)) {
-                            if (response.render.status === 0) return that.stopRequest('您访问的页面不存在');
+                        } else if (response[API_CODE_KEY] === (that.route.status || 1)) {
+                            if (response[API_DATA_KEY].status === 0) return that.stopRequest('您访问的页面不存在');
                             
                             // 将数据缓存
-                            that.render = $.extend(that.render, response.render);
+                            that.render = $.extend(that.render, response[API_DATA_KEY]);
                             that.checkRequest();
                         } else {
-                            that.stopRequest(response.msg || '服务器发生未知错误', 'debug');
+                            that.stopRequest(response[API_MSG_KEY] || '服务器发生未知错误', 'debug');
                         };
                     }).fail(function(xhr, status, c) {
                         switch (status) {
@@ -986,10 +993,10 @@
                     let that = this;
 
                     return $.ajax({
-                        url : config.TPL_DIR + this.path + config.TPL_EXT_NAME,
+                        url : TPL_DIR + this.path + TPL_EXT_NAME,
                         type : 'GET',
                         dataType : 'html',
-                        timeout : config.TIME_OUT
+                        timeout : TIME_OUT
                     }).done(function(response) {
                         that.applyTpl(response).checkRequest();
                     }).fail(function(xhr, status) {
@@ -1022,7 +1029,7 @@
                 compile(templ, data, title) {
                     return self.compile(templ, $.extend({
                         TITLE : title,
-                        JS_FILE : this.path + config.JS_EXT_NAME
+                        JS_FILE : this.path + JS_EXT_NAME
                     }, data));
                 }
                 exec(callback) {
@@ -1096,7 +1103,7 @@
                             interval = 45e2,
                             GCHanlder = function(webview) {
                                 if (webview && webview.prop.status === 'pending') {
-                                    if (webview.prop.timer >= config.AUTO_DIE_TIME + (webview.prop.count * interval)) {
+                                    if (webview.prop.timer >= AUTO_DIE_TIME + (webview.prop.count * interval)) {
                                         webview.off().destroy();
                                     } else {
                                         webview.prop.timer += interval;
