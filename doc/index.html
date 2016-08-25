@@ -76,7 +76,7 @@
     <div id="read">
       <h2>阅读说明</h2>
       <p><tt>function(a, b[, c, d])</tt> // 参数a, b 为必要参数，c, d为可选参数</p>
-      <p><tt>a = string ['app']</tt> // 参数a的数据类型为 string , 默认参数为'app'</p>
+      <p><tt>* a = string ['app']</tt> // 参数a的数据类型为 string , 默认参数为'app'，* 代表必填参数, [] 代表参数默认值</p>
       <p>// 路由别名 [<tt>'route/a', 'route/old/a'</tt>] // 参数书写范例（仅限 [ ] 括号中的内容）</p>
     </div>
     <div class="installation" id="installation">
@@ -270,23 +270,23 @@ APP = {
   render : object <i>// 渲染页面的数据</i>
   route : object <i>// 页面使用的路由规则，请参考<b>Router</b></i>
   runtime : {
-    callback : function(App, webview) <i>// 页面加载完的回调函数</i>
+    callback : function(webview, App) <i>// 页面加载完的回调函数</i>
     dataXHR : xhr <i>// 数据加载xhr对象</i>
     destroy : Array <i>// 页面销毁时执行的函数集合</i>
     enter : Array <i>// 页面进入时执行的函数集合</i>
     leave : Array <i>// 页面离开时执行的函数集合</i>
     tplXHR : xhr <i>// 模板加载xhr对象</i>
   }
-  search : string ['none'] <i>// 页面url中的参数字符串</i>
+  search : string ['none'] <i>// 页面url中的查询参数字符串</i>
   state : object <i>// 页面数据储存，每次页面销毁时此对象也将被销毁</i>
   templ : array <i>// 页面包含的模版字符串</i>
 </pre>
       <p>webview提供了一此操作页面的方法</p>
       <pre>
-  webview.on(type, handler) <i>// 页面事件绑定，分别是页面显示时，页面挂起时，页面销毁时</i>
+  webview.on(type, fn) <i>// 页面事件绑定，分别是页面进入时，页面离开时，页面销毁时</i>
 
-  * type = string <i>// webview绑定的事件，enter:页面进入时 leave:页面挂起时 die:页面销毁时</i>
-  * fn = function <i>// 出发事件后执行的函数</i>
+  * type = string <i>// webview绑定的事件，enter:页面进入时 leave:页面离开时 die:页面销毁时</i>
+  * fn = function <i>// 触发事件后执行的函数</i>
 </pre>
       <pre>
   webview.setState([key, value]) <i>// 为webview.state设直一个值</i>
@@ -309,7 +309,7 @@ APP = {
 </pre>
       <p>页面链接可以定义拉入历史记录类型 <i>// 参考 APP.controller.request 方法</i></p>
       <pre>
-  &lt;a data-hash="index" data-sate="3"&gt;
+  <i>如</i> &lt;a data-hash="index" data-sate="3"&gt; <i>或又如</i> &lt;a href="index" data-sate="2"&gt;
 </pre>
       <p>SPA默认暴露的渲染数据有</p>
       <pre>

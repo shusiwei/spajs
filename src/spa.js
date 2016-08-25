@@ -796,30 +796,19 @@
                 on(type, fn) {
                     let runtime = this.runtime;
 
-                    if (arguments.length === 2) {
-                        switch (type) {
-                            case 'enter' :
-                                fn();
-                                runtime.enter.push(fn);
-                                break;
+                    switch (type) {
+                        case 'enter' :
+                            fn();
+                            runtime.enter.push(fn);
+                            break;
 
-                            case 'leave' :
-                                runtime.leave.push(fn);
-                                break;
+                        case 'leave' :
+                            runtime.leave.push(fn);
+                            break;
 
-                            case 'die' :
-                                runtime.destroy.push(fn);
-                                break;
-                        };
-                    } else {
-                        if (isFunction(arguments[0].listen)) {
-                            arguments[0].listen();
-
-                            // 如果这个页面会被强制监视刷新，那么enter 数组将对此webview没有意义
-                            if (this.route.observer === false) runtime.enter.push(arguments[0].listen);
-                        };
-                        if (isFunction(arguments[0].pend)) runtime.leave.push(arguments[0].pend);
-                        if (isFunction(arguments[0].destroy)) runtime.destroy.push(arguments[0].destroy);
+                        case 'die' :
+                            runtime.destroy.push(fn);
+                            break;
                     };
 
                     return this;
@@ -1044,14 +1033,14 @@
                                 this.runtime.callback = null;
 
                                 // 执行页面回调
-                                callback(self, this);
+                                callback(this, self);
                             };
                             break;
 
                         case 'ready' :
                         case 'active' :
                         case 'restore' :
-                            callback(self, this);
+                            callback(this, self);
                             break;
                     };
                 }
