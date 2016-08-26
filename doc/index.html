@@ -322,8 +322,8 @@ APP = {
 </pre>
       <p>自定义的模版标签有</p>
       <pre>
-  {{#header}} <i>// 生成 &lt;header class="page-header backdrop"&gt;&lt;/header&gt;</i>
-  {{#container}} <i>// &lt;div class="page-container"&gt;&lt;/div&gt;</i>
+  {{#header}}{{header#}} <i>// 生成 &lt;header class="page-header backdrop"&gt;&lt;/header&gt;</i>
+  {{#container}}{{container#}} <i>// &lt;div class="page-container"&gt;&lt;/div&gt;</i>
   {{#title#}} <i>// &lt;span class="page-title"&gt;{{=it.TITLE}}&lt;/span&gt;</i>
   {{#title}}{{title#}} <i>// &lt;span class="page-title"&gt;&lt;/span&gt;</i>
   {{#back#}} <i>// &lt;a data-rel="back" class="app-ui-icon app-icon-back icon back"&gt;&lt;/a&gt;</i>
