@@ -66,8 +66,8 @@
         isBoolean = function(value) {
             return isType('boolean', value);
         },
-        inString = function(value, match) {
-            return value.indexOf(match) > -1;
+        includes = function(string, value) {
+            return string.indexOf(value) > -1;
         },
         defineProp = (function() {
             let parseDescriptor = function(source) {
@@ -84,26 +84,26 @@
                     };
                 };
 
-            return function(target) {
-                for (let i = 1, length = arguments.length; i < length; i++) {
-                    for (let key in arguments[i]) {
+            return function(target, ...sources) {
+                for (let source of sources) {
+                    for (let key in source) {
                         let descriptor;
 
-                        if (isObject(arguments[i][key])) {
+                        if (isObject(source[key])) {
                             descriptor = {
-                                value : defineProp({}, arguments[i][key])
+                                value : defineProp({}, source[key])
                             };
-                        } else if (isArray(arguments[i][key]) && arguments[i][key].length === 3 && arguments[i][key][0] === 'descriptor') {
-                            if (isObject(arguments[i][key][1])) {
-                                descriptor = parseDescriptor(arguments[i][key]);
+                        } else if (isArray(source[key]) && source[key].length === 3 && source[key][0] === 'descriptor') {
+                            if (isObject(source[key][1])) {
+                                descriptor = parseDescriptor(source[key]);
                             } else {
                                 descriptor = $.extend({
-                                    value : arguments[i][key][1]
-                                }, arguments[i][key][2]);
+                                    value : source[key][1]
+                                }, source[key][2]);
                             };
                         } else {
                             descriptor = {
-                                value : arguments[i][key]
+                                value : source[key]
                             };
                         };
 
@@ -114,62 +114,23 @@
                 return target;
             };
         })(),
-        query2json = function() {
-            let queryStr = global.location.search.split('?').pop(),
-                queryKey;
-
-            // 如果queryStr不符合query的格式但符合key的格式，那么queryStr就代表key
-            switch (arguments.length) {
-                case 1 :
-                        if (isString(arguments[0]) && inString(arguments[0], '=')) {
-                            queryStr = arguments[0];
-                        } else if (isArray(arguments[0]) || (isString(arguments[0]) && !inString(arguments[0], '='))) {
-                            queryKey = arguments[0];
-                        };
-
-                    break;
-
-                case 2 :
-                    queryStr = arguments[0],
-                    queryKey = arguments[1];
-
-                    break;
-            };
-
-            if (!queryStr || !inString(queryStr, '=')) return null;
-
-            let data = defineProp({}, {
+        query2json = function(queryStr) {
+            let queryArr = queryStr.split('&'),
+                queryData = defineProp({}, {
                     length : ['descriptor', 0, {
                         writable : true
                     }]
                 });
 
-            $.each(queryStr.split('&'), function(index, param) {
-                let paramArr = param.split('=');
+            for (let paramStr of queryArr) {
+                let paramArr = paramStr.split('=');
                 if (paramArr.length === 2) {
-                    data[paramArr[0]] = paramArr[1];
-                    data.length ++;
+                    queryData[paramArr[0]] = paramArr[1];
+                    queryData.length ++;
                 };
-            });
-
-            if (isString(queryKey)) {
-                return data[queryKey];
-            } else if (isArray(queryKey)) {
-                return (function(keyArr, result) {
-                    $.each(keyArr, function(index, name) {
-                        result[name] = data[name];
-                        result.length ++;
-                    });
-
-                    return result;
-                })(queryKey, defineProp({}, {
-                    length : ['descriptor', 0, {
-                        writable : true
-                    }]
-                }));
-            } else if (isUndefined(queryKey)) {
-                return data;
             };
+
+            return queryData;
         };
 
     class SPA {
@@ -250,15 +211,15 @@
                         route = this[name] = {
                             name : routeArr[0],
                             param : routeArr[1] ? routeArr[1].split(':') : null,
-                            path : routeArr[1] ? arguments[0].replace(/\?/, '/').replace(/:/g, '~') : routeArr[0],
+                            path : routeArr[1] ? name.replace(/\?/, '/').replace(/:/g, '~') : routeArr[0],
                             uri : null
                         };
-
+                    
                     for (let option of options) {
                         if (isString(option)) {
                             if (option.slice(0, 9) === '<template') {
                                 route.templ = option;
-                            } else if (inString(option, '=')) {
+                            } else if (includes(option, '=')) {
                                 route.preset = query2json(option);
                             } else {
                                 route.uri = getURI(option);
@@ -522,10 +483,40 @@
 
                     if (callback.onTransition) callback.onTransition(webview, self);
                 }
+                static history(type, url, options) {
+                    let state = null,
+                        title = null;
+
+                    for (let option of options) {
+                        switch (typeof option) {
+                            case 'object' :
+                                    state = option;
+                                break;
+
+                            case 'string' :
+                                    title = option;
+                                break;
+                        };
+                    };
+
+                    switch (type) {
+                        case 'replace' :
+                                history.replaceState(state, title, url);
+                            break;
+
+                        case 'push' :
+                                history.pushState(state, title, url);
+                            break;
+                    };
+                }
                 constructor() {
                     const self = this;
 
-                    if (isObject(storage)) for (let key in storage) this[key] = storage[key];
+                    if (isObject(storage)) {
+                        for (let key in storage) {
+                            this[key] = storage[key];
+                        };
+                    };
 
                     this.version = PROJECT_VER;
 
@@ -537,7 +528,7 @@
 
                     // 初始化SPA，工作开始
                     // 绑定onhashchange事件
-                    global.addEventListener('popstate', function(evt) {
+                    global.addEventListener('popstate', (evt) => {
                         if (location.hash !== activeView.hash && WebApp.isValidHash(location.hash)) return self.request(location.hash, 0, 2);
                     }, false);
 
@@ -600,16 +591,19 @@
                     // 如果此浏览窗口第一次打开页面且此页面非主页，那么将主页HASH替换成第一页HASH
                     if (source === 0 && isNull(sessionStorage.getItem(project))) {
                         // 把首页HASH替换当前历史记录
-                        history.replaceState(null, null, HOME_HASH);
+                        this.replaceState(HOME_HASH);
+
                         // 记录此浏览器窗口为首次打开页面
-                        sessionStorage.setItem(project, true);
+                        try {
+                            sessionStorage.setItem(project, true);
+                        } catch (e) {};
 
                         // 当首页HASH替换当前历史记录后，重新插入当前页的历史记录
-                        if (hash !== HOME_HASH) history.pushState(null, null, hash);
+                        if (hash !== HOME_HASH) this.pushState(hash);
                     };
                     
-                    if (state === 1) history.replaceState(null, null, hash);
-                    if (state === 2) history.pushState(null, null, hash);
+                    if (state === 1) this.replaceState(hash);
+                    if (state === 2) this.pushState(hash);
 
                     let webview = activeView = WebApp.getWebView(hash, isUndefined(source) ? 1 : source, data);
                     
@@ -640,12 +634,27 @@
                         };
                     };
                 }
-                redirect(hash, state, data) {
+                redirect(hash, ...options) {
+                    let state = 1,
+                        data;
+
+                    for (let option of options) {
+                        switch (typeof option) {
+                            case 'number' :
+                                    state = option;
+                                break;
+
+                            case 'object' :
+                                    data = option;
+                                break;
+                        };
+                    };
+
                     this.request(hash, isNumber(state) ? state : 1, data);
                 }
                 // 渲染带有数据的模版视图
                 compile(templ, data) {
-                    return doT.compile(templ)($.extend({}, data, this.define()));
+                    return doT.compile(templ)($.extend({}, data, constant));
                 }
                 define(key, value) {
                     switch (arguments.length) {
@@ -665,7 +674,13 @@
                     };
                 }
                 exec(callback) {
-                    callback(activeView, this)
+                    callback(activeView)
+                }
+                pushState(url, ...options) {
+                    WebApp.history('push', url, options);
+                }
+                replaceState(url, ...options) {
+                    WebApp.history('replace', url, options);
                 }
             };
 
@@ -690,7 +705,7 @@
                             
                             // 替换模板
                             for (let j = 0, tplRegexLen = tplRegex.length; j < tplRegexLen; j++) {
-                                if (inString(tplStr, tplRegex[j].source)) tplStr = tplStr.replace(tplRegex[j], tplRepStr[j]);
+                                if (includes(tplStr, tplRegex[j].source)) tplStr = tplStr.replace(tplRegex[j], tplRepStr[j]);
                             };
                         };
 
@@ -754,13 +769,9 @@
                     this.prop.status = 'ready';
 
                     // 所有新开的页面的timer都从0开始
-                    this.prop.timer = 0;
-
                     // 所有新开页面的计数都为0
-                    this.prop.count = 0;
-
                     // 所有新开的页面的滚动条位置都为0
-                    this.prop.scrollY = 0;
+                    this.prop.timer = this.prop.count = this.prop.scrollY = 0;
 
                     return GC.push(this);
                 }
@@ -821,7 +832,7 @@
 
                     return this;
                 }
-                destroy(deep) {
+                destroy() {
                     // 销毁webview
                     let destroyArr = this.runtime.destroy;
 
@@ -872,59 +883,57 @@
                 }
                 // ajax新的数据
                 ajaxData() {
-                    let that = this;
-
                     return $.ajax({
                         url : this.route.uri,
                         type : API_TYPE,
                         data : this.route.params ? $.extend({}, this.route.params, API_DATA) : API_DATA,
                         dataType : API_DATA_TYPE,
                         timeout : TIME_OUT
-                    }).done(function(response) {
-                        if (isFunction(that.route.proxy)) response = that.route.proxy(response, that, self);
+                    }).done((response) => {
+                        if (isFunction(this.route.proxy)) response = this.route.proxy(response, this, self);
 
                         if (isUndefined(response) || isNull(response) || response === false) {
                             return response;
                         } else if (isUndefined(response[API_CODE_KEY])) {
-                            that.stopRequest('返回的数据无status');
-                        } else if (response[API_CODE_KEY] === (that.route.status || 1)) {
-                            if (response[API_DATA_KEY].status === 0) return that.stopRequest('您访问的页面不存在');
+                            this.stopRequest('返回的数据无status');
+                        } else if (response[API_CODE_KEY] === (this.route.status || 1)) {
+                            if (response.hasOwnProperty(API_DATA_KEY) && response[API_DATA_KEY].status === 0) return this.stopRequest('您访问的页面不存在');
                             
                             // 将数据缓存
-                            that.render = $.extend(that.render, response[API_DATA_KEY]);
-                            that.checkRequest();
+                            this.render = $.extend(this.render, response[API_DATA_KEY]);
+                            this.checkRequest();
                         } else {
-                            that.stopRequest(response[API_MSG_KEY] || '服务器发生未知错误', 'debug');
+                            this.stopRequest(response[API_MSG_KEY] || '服务器发生未知错误', 'debug');
                         };
-                    }).fail(function(xhr, status, c) {
+                    }).fail((xhr, status, c) => {
                         switch (status) {
                             case 'error' :
                                 switch (xhr.status) {
                                     case 404 :
-                                        that.stopRequest('您访问的页面未找到');
+                                        this.stopRequest('您访问的页面未找到');
                                         break;
 
                                     default :
-                                        that.stopRequest('服务器发生错误', 'debug', true);
+                                        this.stopRequest('服务器发生错误', 'debug', true);
                                         break;
                                 };
                                 break;
 
                             case 'abort' :
-                                that.stopRequest('页面请求被中止');
+                                this.stopRequest('页面请求被中止');
                                 break;
 
                             case 'timeout' :
-                                that.stopRequest('您的网络不给力', 'wifi-error', true);
+                                this.stopRequest('您的网络不给力', 'wifi-error', true);
                                 break;
 
                             case 'parsererror' :
-                                that.stopRequest('数据格式错误', 'debug');
+                                this.stopRequest('数据格式错误', 'debug');
                                 break;
                         };
-                    }).always(function() {
+                    }).always(() => {
                         // xhr请求完成，销毁xhr对象
-                        that.runtime.dataXHR = null;
+                        this.runtime.dataXHR = null;
                     });
                 }
                 // 应用数据
@@ -954,28 +963,26 @@
                 }
                 // ajax回来新的模板
                 ajaxTpl() {
-                    let that = this;
-
                     return $.ajax({
                         url : TPL_DIR + this.path + TPL_EXT_NAME,
                         type : 'GET',
                         dataType : 'html',
                         timeout : TIME_OUT
-                    }).done(function(response) {
-                        that.applyTpl(response).checkRequest();
-                    }).fail(function(xhr, status) {
+                    }).done((response) => {
+                        this.applyTpl(response).checkRequest();
+                    }).fail((xhr, status) => {
                         switch (status) {
                             case 'error' :
-                                    that.stopRequest('您访问的页面不存在');
+                                    this.stopRequest('您访问的页面不存在');
                                 break;
 
                             case 'timeout' :
-                                    that.stopRequest('您的网络不给力', 'wifi-error', true);
+                                    this.stopRequest('您的网络不给力', 'wifi-error', true);
                                 break;
                         };
-                    }).always(function() {
+                    }).always(() => {
                         // xhr请求完成，销毁xhr对象
-                        that.runtime.tplXHR = null;
+                        this.runtime.tplXHR = null;
                     });
                 }
                 applyTpl(tplStr) {
@@ -1004,14 +1011,14 @@
                                 this.runtime.callback = null;
 
                                 // 执行页面回调
-                                callback(this, self);
+                                callback(this, self, this.$webview, this.state, this.render);
                             };
                             break;
 
                         case 'ready' :
                         case 'active' :
                         case 'restore' :
-                            callback(this, self);
+                            callback(this, self, this.$webview, this.state, this.render);
                             break;
                     };
                 }
@@ -1043,15 +1050,15 @@
 
                     return this;
                 }
-                setState() {
-                    if (arguments.length === 0) {
+                setState(...args) {
+                    if (args.length === 0) {
                         return this.state;
-                    } else if (arguments.length === 1 && isString(arguments[0])) {
-                        return this.state[arguments[0]];
-                    }else if (arguments.length === 2 && isString(arguments[0])) {
-                        this.state[arguments[0]] = arguments[1];
+                    } else if (args.length === 1 && isString(args[0])) {
+                        return this.state[args[0]];
+                    }else if (args.length === 2 && isString(args[0])) {
+                        this.state[args[0]] = args[1];
                     } else {
-                        for (let object of arguments) {
+                        for (let object of args) {
                             $.extend(this.state, object);
                         };
                     };

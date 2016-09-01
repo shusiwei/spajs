@@ -64,7 +64,7 @@
     <a class="toc_title" href="#controller">应用控制器</a>
     <a class="toc_title" href="#webview">页面视图</a>
     <a class="toc_title" href="#template">模板</a>
-    <a class="toc_title" href="#template">变更日志</a>
+    <a class="toc_title" href="#changelog">变更日志</a>
   </div>
   <div class="container" id="introduction">
     <p><a href="https://github.com/shusiwei/spajs">spa.js</a>一个SPA（Single Page Application）单页应用框架。</p>
@@ -187,7 +187,7 @@ APP = {
     redirect : function(webview, App) { <i>// 重定向</i>
       return '#!new/hash/url' <i>// 返回重定向的地址</i>
     }
-    proxy : function(result, webview, App) { <i>// API数据代理</i>
+    proxy : function(response, webview, App) { <i>// API数据代理</i>
       ... <i>// 代码块</i>
     }
     render ：function(render, webview, App) { <i>// 渲染数据重组</i>
@@ -227,8 +227,8 @@ APP = {
   controller.define([key, value]) <i>// 定义一个值</i>
   <i>如 ：</i> controller.define('name', 'uhuibao'); <i>// {name : 'uhuibao'}</i>
 
-  * key = string <i>// 值的名称</i>
-  * value = * <i>// 保存的值</i>
+  key = string <i>// 值的名称</i>
+  value = * <i>// 保存的值</i>
   <i>// 如果没有参数，则得到整个被保存的数据</i>
       </pre>
       <pre>
@@ -254,8 +254,20 @@ APP = {
   state = number [1] <i>// 此参数参考controller.request</i>
   data = object <i>// 此参数参考controller.request</i>
 </pre>
+      <pre>
+  controller.replaceState(hash) <i>// 替换当前页面的url/hash地址</i>
+  <i>如 ：</i> controller.replaceState('#!index');
+
+  * hash = string <i>// 带有hash的url地址</i>
+</pre>
+      <pre>
+  controller.pushState(hash) <i>// 加入新的url/hash地址</i>
+  <i>如 ：</i> controller.pushState('#!index');
+
+  * hash = string <i>// 带有hash的url地址</i>
+</pre>
       <h2 id="webview">WebView 页面视图</h2>
-      <p>spajs中，很个页面都是独立的webview对象，webview基于WebView类构建</p>
+      <p>spajs中，每个页面都是独立的webview对象，webview基于WebView类构建</p>
       <p>webview保存着页面中的所有信息</p>
       <pre>
   $webview : jQuery DOM <i>// 页面容器</i>
@@ -308,9 +320,13 @@ APP = {
   &lt;a href="#!index"&gt;
   &lt;a data-hash="index"&gt;
 </pre>
-      <p>页面链接可以定义拉入历史记录类型 <i>// 参考 APP.controller.request 方法</i></p>
+      <p>页面链接可以通过data-hash与data-state属性定义拉入历史记录类型 <i>// 参考 APP.controller.request 方法</i></p>
       <pre>
-  <i>如</i> &lt;a data-hash="index" data-sate="3"&gt; <i>或又如</i> &lt;a href="index" data-sate="2"&gt;
+  <i>如</i> &lt;a data-hash="index" data-sate="1"&gt; <i>或又如</i> &lt;a data-hash="index" data-sate="3"&gt;
+</pre>
+      <p>页面链接可以通过data-rel属性定义快捷链接 <i>// home:首页 back:后退 forward:前进 refresh:刷新</i></p>
+      <pre>
+  <i>如</i> &lt;a data-rel="home"&gt; <i>或又如</i> &lt;a data-rel="back"&gt;
 </pre>
       <p>SPA默认暴露的渲染数据有</p>
       <pre>
