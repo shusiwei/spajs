@@ -60,7 +60,7 @@ APP.start(container[, storage, callback]);
 ```javascript
 APP = {
   App : new WebApp = {
-    ......(storage) // 全局存储,
+    ...... // 全局存储，storage对象,
     request(hash, state, source, data),
     redirect(hash, state, data),
     compile(templ, data),
@@ -70,9 +70,9 @@ APP = {
   project : project,
   version : '3.0.0',
   routes : new Router = {
-    'routeNameA' : {...},
-    'routeNameB' : {...},
-    'routeNameC' : {...}
+    routeNameA : {...},
+    routeNameB : {...},
+    routeNameC : {...}
   }
 }
 ```
@@ -105,4 +105,16 @@ var APP = new SPA('project_name', {});
     * debug : boolean // 是否为debug模式
     lifeCycle : number [90e3] // 页面生命周期
   }
+```
+
+####router (路由)
+
+```javascript
+router(basePath);
+
+var routes = APP.router('http://api.domain.com/');
+
+* basePath = string ['/'] // 接口根目录
+
+返回一个路由集合对象 routes，路由中的相对路径的API地址都会默认在前面加上 'http://api.domain.com/';
 ```
