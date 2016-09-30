@@ -306,10 +306,22 @@ spajs模板引擎使用[doT.js](http://olado.github.io/doT/)
 
 SPA默认暴露的渲染数据有
 
-```javascript
+```html
 {{=it.PROJECT_NAME}} // 项目名称
 {{=it.PROJECT_DIR}} // 项目目录
 {{=it.IMG_DIR}} // 图像目录
 {{=it.JS_DIR}} // JS目录
 {{=it.HASH_PREFIX}} // hash前缀
+```
+
+自定义的模版标签有
+
+```html
+{{#header}}{{header#}} <i>// 生成 <header class="page-header backdrop"></header></i>
+{{#container}}{{container#}} <i>// <div class="page-container"></div></i>
+{{#title#}} <i>// <span class="page-title">{{=it.TITLE}}</span></i>
+{{#title}}{{title#}} <i>// <span class="page-title"></span></i>
+{{#back#}} <i>// <a data-rel="back" class="app-ui-icon app-icon-back icon back"></a></i>
+{{#forward#}} <i>// <a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"></a></i>
+{{#home#}} <i>// <a data-rel="home" class="app-ui-icon app-icon-home icon home"></a></i>
 ```
