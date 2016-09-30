@@ -164,7 +164,7 @@ callback = { // 回调
 }
 ```
 
-####APP.controller(window.App) 应用控制器
+###APP.controller(window.App) 应用控制器
 
 SPA构建后最终得到的是controller对象，controller基于WebApp类构建，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法
 
@@ -199,7 +199,7 @@ controller.request(hash[, state, source, data]) // 请求一个新的页面
 如 ：controller.request('#!index');
 
 * hash = string // 带有hash的url地址
-state = number [当hash等于当前的hash的时候，默认值为 0，否则为 1 // 拉入历史记录类型，0:自动 1:替换历史 2:拉入历史 3:不拉入历史
+state = number [当hash等于当前的hash的时候，默认值为 0，否则为 1] // 拉入历史记录类型，0:自动 1:替换历史 2:拉入历史 3:不拉入历史
 source = number // 页面跳转类型 0:打开页面 1:链接跳转 2:历史跳转
 data = object // 页面默认的渲染数据
 ```
@@ -225,4 +225,91 @@ controller.pushState(hash) // 加入新的url/hash地址
 如 ：controller.pushState('#!index');
 
 * hash = string // 带有hash的url地址
+```
+
+###WebView 页面视图
+
+spajs中，每个页面都是独立的webview对象，webview基于WebView类构建
+
+webview保存着页面中的所有信息
+
+```javascript
+$webview : jQuery DOM // 页面容器
+hash : string // 页面的hash地址
+path : string // 页面的路径
+prop : { // 页面中的静态属性
+  count : 0 // 页面打开次数
+  scrollY : 0 // 滚动条位置
+  status : "active" // 页面状态
+  timer : 0 // 页面挂起后的计时
+}
+query : object/null // 页面url中的参数，如果没有参数，则为null
+render : object // 渲染页面的数据
+route : object // 页面使用的路由规则，请参考<b>Router</b>
+runtime : {
+  callback : function(webview, App) // 页面加载完的回调函数
+  dataXHR : xhr // 数据加载xhr对象
+  destroy : Array // 页面销毁时执行的函数集合
+  enter : Array // 页面进入时执行的函数集合
+  leave : Array // 页面离开时执行的函数集合
+  tplXHR : xhr // 模板加载xhr对象
+}
+search : string ['none'] // 页面url中的查询参数字符串
+state : object // 页面数据储存，每次页面销毁时此对象也将被销毁
+templ : array // 页面包含的模版字符串
+```
+
+webview提供了一此操作页面的方法
+
+```javascript
+webview.on(type, fn) // 页面事件绑定，分别是页面进入时，页面离开时，页面销毁时
+
+* type = string // webview绑定的事件，enter:页面进入时 leave:页面离开时 die:页面销毁时
+* fn = function // 触发事件后执行的函数
+```
+
+```javascript
+webview.setState([key, value]) // 为webview.state设直一个值
+如 webview.setState('name', 'uhuibao');
+如 webview.setState('name'); // 'uhuibao'
+如 webview.setState({a : 1, b : 2}); // {name : 'uhuibao', a : 1, b : 2}
+如 webview.setState({a : 3, b : 4}, {c : 5, d : 6}); // {name : 'uhuibao', a : 3, b : 4, c : 5, d : 6}
+如 webview.setState(); // {name : 'uhuibao', a : 3, b : 4, c : 5, d : 6}
+
+key = string/object // 值的名称，当key是一个对象时，则保存整个对象，同时此方法后面的参数也只能为1个或多个对象，当key是一个字符串时，value为要保存的值，如果value参数没有，则返回webview.state[key]的值
+value = * // 保存的值
+// 如果没有任何参数时，则返回整个webview.state
+```
+
+
+###Template 模板
+
+spajs模板引擎使用[doT.js](http://olado.github.io/doT/)
+
+页面中的链接可以使用两种方式
+
+```html
+<a href="#!index">
+<a data-hash="index">
+```
+
+```html
+页面链接可以通过data-hash与data-state属性定义拉入历史记录类型 // 参考 APP.controller.request 方法
+如：<a data-hash="index" data-sate="1">
+或又如：<a data-hash="index" data-sate="3">
+
+页面链接可以通过data-rel属性定义快捷链接 // home:首页 back:后退 forward:前进 refresh:刷新
+
+如：<a data-rel="home">
+或又如：<a data-rel="back">
+```
+
+SPA默认暴露的渲染数据有
+
+```javascript
+{{=it.PROJECT_NAME}} // 项目名称
+{{=it.PROJECT_DIR}} // 项目目录
+{{=it.IMG_DIR}} // 图像目录
+{{=it.JS_DIR}} // JS目录
+{{=it.HASH_PREFIX}} // hash前缀
 ```
