@@ -25,3 +25,17 @@ clone https://github.com/shusiwei/spajs.git
 ```bash
 bower install --save shusiwei/spajs
 ```
+
+##使用（Use）
+###页面引入
+
+```html
+<link rel="stylesheet" type="text/css" href="../js/spa.css"></link>
+<script type="text/javascript" src="./js/spa.js"></script>
+```
+
+###AMD&CMD
+```javascript
+// 引入SPA模块
+var SPA = require('spa');
+```
