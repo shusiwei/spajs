@@ -299,7 +299,6 @@ spajs模板引擎使用[doT.js](http://olado.github.io/doT/)
 或又如：<a data-hash="index" data-sate="3">
 
 页面链接可以通过data-rel属性定义快捷链接 // home:首页 back:后退 forward:前进 refresh:刷新
-
 如：<a data-rel="home">
 或又如：<a data-rel="back">
 ```
@@ -317,11 +316,31 @@ SPA默认暴露的渲染数据有
 自定义的模版标签有
 
 ```html
-{{#header}}{{header#}} <i>// 生成 <header class="page-header backdrop"></header></i>
-{{#container}}{{container#}} <i>// <div class="page-container"></div></i>
-{{#title#}} <i>// <span class="page-title">{{=it.TITLE}}</span></i>
-{{#title}}{{title#}} <i>// <span class="page-title"></span></i>
-{{#back#}} <i>// <a data-rel="back" class="app-ui-icon app-icon-back icon back"></a></i>
-{{#forward#}} <i>// <a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"></a></i>
-{{#home#}} <i>// <a data-rel="home" class="app-ui-icon app-icon-home icon home"></a></i>
+{{#header}}{{header#}} // 生成 <header class="page-header backdrop"></header>
+{{#container}}{{container#}} // <div class="page-container"></div>
+{{#title#}} // <span class="page-title">{{=it.TITLE}}</span>
+{{#title}}{{title#}} // <span class="page-title"></span>
+{{#back#}} // <a data-rel="back" class="app-ui-icon app-icon-back icon back"></a>
+{{#forward#}} // <a data-rel="forward" class="app-ui-icon app-icon-forward icon forward"></a>
+{{#home#}} // <a data-rel="home" class="app-ui-icon app-icon-home icon home"></a>
+```
+
+template 标签属性
+
+```html
+<template data-title="标题文字"> // 页面标题
+```
+
+###API 接口
+
+spajs 数据基于接口 ajax，接口返回的数据必须遵守以下格式，key名的修改请参照 #SPA 构造函数#
+
+```javascript
+{
+  status : number/string/boolean [1] // 状态码
+  msg : string // 状态描述
+  data : { // 接口数据，值必须为一个object对象
+    status : 0  // 当求一个绝对数据如：?id=8，而数据库中不存在id为8的数据，此时应该返回空数据，此时则需要status为0，webview将会跳转到404页面
+  }
+}
 ```
