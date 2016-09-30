@@ -30,8 +30,8 @@ bower install --save shusiwei/spajs
 ###页面引入
 
 ```html
-<link rel="stylesheet" type="text/css" href="../js/spa.css"></link>
-<script type="text/javascript" src="./js/spa.js"></script>
+<link rel="stylesheet" type="text/css" href="../dist/spa.css"></link>
+<script type="text/javascript" src="./dist/spa.js"></script>
 ```
 
 ###AMD&CMD

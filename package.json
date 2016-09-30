@@ -23,7 +23,7 @@
     "jquery": "^3.1.0"
   },
   "scripts": {
-    "test": "test"
+    "build": "gulp"
   },
   "repository": {
     "type": "git",
