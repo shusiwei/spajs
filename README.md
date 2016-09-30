@@ -77,7 +77,7 @@ APP = {
 }
 ```
 
-####class SPA （SPA 类）
+##class SPA （SPA 类）
 
 #####constructor (构造函数)
 
