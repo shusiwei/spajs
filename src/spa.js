@@ -2,8 +2,8 @@
  * Raspberry.js
  * Description: a relaxed javascript framework for Single Page Application WebApp,it relies on jQuery(zepto).
  * Coder: shusiwei
- * Date: 2016-07-21
- * Version: 2.7.21
+ * Date: 2016-10-01
+ * Version: 3.0.1
  *
  * https://github.com/shusiwei/raspberry
  * Licensed under the MIT license.
@@ -134,7 +134,7 @@
   class SPA {
     constructor(project, options = {}) {
       this.project = project;
-      this.version = '3.0.0';
+      this.version = '3.0.1';
 
       // 基本配置
       let HASH_PREFIX = options.prefix || '#!',
