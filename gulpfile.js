@@ -2,13 +2,7 @@ var gulp = require('gulp'),
   cleanCSS = require('gulp-clean-css'),
   uglify = require('gulp-uglify'),
   eslint = require('gulp-eslint'),
-  clean = require('gulp-clean'),
   babel = require('gulp-babel');
-
-// 清空资源
-gulp.task('clean', function() {
-  return gulp.src('dist').pipe(clean());
-});
 
 // 压缩modules文件
 gulp.task('babel', function() {
@@ -33,6 +27,6 @@ gulp.task('css', function() {
 });
 
 // DIST任务
-gulp.task('default', ['clean'], function() {
+gulp.task('default', function() {
   gulp.start('babel', 'css');
 });
