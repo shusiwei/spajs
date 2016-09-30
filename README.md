@@ -116,5 +116,35 @@ var routes = APP.router('http://api.domain.com/');
 
 * basePath = string ['/'] // 接口根目录
 
-返回一个路由集合对象 routes，路由中的相对路径的API地址都会默认在前面加上 'http://api.domain.com/';
+返回一个路由集合对象 routes，路由中的相对路径的API地址都会默认在前面加上 http://api.domain.com/;
+```
+
+####路由规则
+#####路由集合对象提供push方法可以增加新的路由规则，没有定义路由也能访问hash解析的页面
+
+```javascript
+routes.push(routeName[, uri, escape, preset, options]);
+
+* routeName = string // 路由路径 [路径 : 'news/article' 或 路径+参数 : 'news/article?:id'] 按参数多少匹配，由少至多匹配
+uri = string // api地址 ['list.php']，支持相对&绝对
+escape = array // 参数转换 ['apiParam => urlParam', 'apiParam1 => urlParam1']，如url为 #!id=18，escape = ['shop_id => id']，那么在接口中会以 'api.php?shop_id=18' 的形式传参
+preset = string // 参数预设 ['key=value&key=value']，如：url为 #!id=18&a=9，preset = 'a=1&b=2'，那么在接口中会以 'api.php?id=18&a=9&b=2' 的形式传参
+options = { // 其它选项
+  observer : boolean [false] // 永远保持强制刷新
+  redirect : function(webview, App) { // 重定向
+    return '#!new/hash/url' // 返回重定向的地址
+  }
+  proxy : function(response, webview, App) { // API数据代理
+    ... // 代码块
+  }
+  render ：function(render, webview, App) { // 渲染数据重组
+    ... // 代码块
+
+    return { // 返回的对象，此对象最终会与API传回的数据合并
+      key : value
+    }
+  }
+  status : * // 重定义页面正确的数据状态码
+  alias : string/array // 路由别名 ['route/a', 'route/old/a']
+}
 ```
