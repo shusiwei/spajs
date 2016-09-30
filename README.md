@@ -150,6 +150,7 @@ options = { // 其它选项
 ```
 
 ####start （开始）
+
 执行此方法，SPA开始构建App，并加载显示页面
 
 ```javascript
@@ -166,4 +167,62 @@ callback = { // 回调
 ####APP.controller(window.App) 应用控制器
 
 SPA构建后最终得到的是controller对象，controller基于WebApp类构建，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法
+
 controller提供了一些方法
+
+```javascript
+controller.compile(templ[, data]) // 渲染将一个模板字符串转代为html字符串
+如 ： controller.compile('模板字符串', {渲染数据});
+
+* templ = string // 模板字符串
+data = object // 渲染数据
+```
+
+```javascript
+controller.define([key, value]) // 定义一个值
+如 ： controller.define('name', 'uhuibao'); // {name : 'uhuibao'}
+
+key = string // 值的名称
+value = * // 保存的值
+// 如果没有参数，则得到整个被保存的数据
+```
+
+```javascript
+controller.exec(callback) // 回调一个传入webview对象的函数
+如 ：controller.exec(function(webview) {});
+
+* callback = function // 值的名称
+```
+
+```javascript
+controller.request(hash[, state, source, data]) // 请求一个新的页面
+如 ：controller.request('#!index');
+
+* hash = string // 带有hash的url地址
+state = number [当hash等于当前的hash的时候，默认值为 0，否则为 1 // 拉入历史记录类型，0:自动 1:替换历史 2:拉入历史 3:不拉入历史
+source = number // 页面跳转类型 0:打开页面 1:链接跳转 2:历史跳转
+data = object // 页面默认的渲染数据
+```
+
+```javascript
+controller.redirect(hash[, state, data]) // 为页面做一个次url重定向跳转
+如 ：controller.redirect('#!index');
+
+* hash = string // 带有hash的url地址
+state = number [1] // 此参数参考controller.request
+data = object // 此参数参考controller.request
+```
+
+```javascript
+controller.replaceState(hash) // 替换当前页面的url/hash地址
+如 ：controller.replaceState('#!index');
+
+* hash = string // 带有hash的url地址
+```
+
+```javascript
+controller.pushState(hash) // 加入新的url/hash地址
+如 ：controller.pushState('#!index');
+
+* hash = string // 带有hash的url地址
+```
