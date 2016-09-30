@@ -8,6 +8,8 @@ spajs模板引擎使用[doT.js]("http://olado.github.io/doT/)
 
 ##阅读说明
 
-function(a, b[, c, d]) *// 参数a, b 为必要参数，c, d为可选参数*
-
-a = string ['app'] *// 参数a的数据类型为 string , 默认参数为'app'，\* 代表必填参数, [] 代表参数默认值*
+```javascript
+function(a, b[, c, d]) // 参数a, b 为必要参数，c, d为可选参数
+a = string ['app'] // 参数a的数据类型为 string , 默认参数为'app'，* 代表必填参数, [] 代表参数默认值
+// 这是里条注释 ['route/a', 'route/old/a'] // 参数书写范例（仅限 [ ] 括号中的内容）
+```
