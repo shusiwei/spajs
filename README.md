@@ -120,7 +120,7 @@ var routes = APP.router('http://api.domain.com/');
 ```
 
 ####路由规则
-#####路由集合对象提供push方法可以增加新的路由规则，没有定义路由也能访问hash解析的页面
+路由集合对象提供push方法可以增加新的路由规则，没有定义路由也能访问hash解析的页面
 
 ```javascript
 routes.push(routeName[, uri, escape, preset, options]);
@@ -148,3 +148,22 @@ options = { // 其它选项
   alias : string/array // 路由别名 ['route/a', 'route/old/a']
 }
 ```
+
+####start （开始）
+执行此方法，SPA开始构建App，并加载显示页面
+
+```javascript
+APP.start(container[, storage, callback]);
+
+* container = element // webview容器
+storage = object // App全局存储
+callback = { // 回调
+  onReady : function(App) // 初始化成功
+  onTransition : function(webview, App) // 页面跳转回调
+}
+```
+
+####APP.controller(window.App) 应用控制器
+
+SPA构建后最终得到的是controller对象，controller基于WebApp类构建，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法
+controller提供了一些方法
