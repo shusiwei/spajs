@@ -60,7 +60,7 @@ APP.start(container[, storage, callback]);
 ```javascript
 APP = {
   App : new WebApp = {
-    ......(storage)<i>// 全局存储</i>,
+    ......(storage) // 全局存储,
     request(hash, state, source, data),
     redirect(hash, state, data),
     compile(templ, data),
@@ -86,23 +86,23 @@ constructor(project, config);
 
 var APP = new SPA('project_name', {});
 
-* project = string <i>// 项目名称（英文）</i>
+* project = string // 项目名称（英文）
 * config = {
-    prefix : string ['#!'] <i>// hash前缀</i>
-    * name : string <i>// 项目名称（中文）</i>
-    * version : 'string' <i>// 版本号 [a.b.c]</i>
-    root : string ['./project/'] <i>// 项目根目录</i>
-    apiType : string ['post'] <i>// 接口方法['post'/'get']</i>
-    apiDataType : string ['json'] <i>// 接口数据类型</i>
-    apiData : object [{}] <i>// 默认传输的数据</i>
-    apiDataKey : string ['data'] <i>// 接口数据key名</i>
-    apiMsgKey : string ['msg'] <i>// 接口数据描述key名</i>
-    apiCodeKey : string ['status'] <i>// 接口数据状态码key名</i>
-    timeout : number [15000] <i>// 接口超时时间</i>
-    imgDir : string [root + 'img'] <i>// 图片根目录</i>
-    jsDir : string [root + 'js'] <i>// JS根目录</i>
-    tplDir : string [root + 'tpl'] <i>// 模板根目录</i>
-    * debug : boolean <i>// 是否为debug模式</i>
-    lifeCycle : number [90e3] <i>// 页面生命周期</i>
+    prefix : string ['#!'] // hash前缀
+    * name : string // 项目名称（中文）
+    * version : 'string' // 版本号 [a.b.c]
+    root : string ['./project/'] // 项目根目录
+    apiType : string ['post'] // 接口方法['post'/'get']
+    apiDataType : string ['json'] // 接口数据类型
+    apiData : object [{}] // 默认传输的数据
+    apiDataKey : string ['data'] // 接口数据key名
+    apiMsgKey : string ['msg'] // 接口数据描述key名
+    apiCodeKey : string ['status'] // 接口数据状态码key名
+    timeout : number [15000] // 接口超时时间
+    imgDir : string [root + 'img'] // 图片根目录
+    jsDir : string [root + 'js'] // JS根目录
+    tplDir : string [root + 'tpl'] // 模板根目录
+    * debug : boolean // 是否为debug模式
+    lifeCycle : number [90e3] // 页面生命周期
   }
 ```
