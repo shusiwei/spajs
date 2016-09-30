@@ -1,4 +1,4 @@
-Single Page Application Framework Dependent on jQuery
+Single Page Application Framework dependent by jQuery
 
 spajs依赖于jQuery3
 
