@@ -15,32 +15,32 @@ a = string ['app'] // 参数a的数据类型为 string , 默认参数为'app'，
 ```
 ##安装
 
-###git
+####git
 
 ```bash
 clone https://github.com/shusiwei/spajs.git
 ```
-###bower
+####bower
 
 ```bash
 bower install --save shusiwei/spajs
 ```
 
 ##使用（Use）
-###页面引入
+####页面引入
 
 ```html
 <link rel="stylesheet" type="text/css" href="../dist/spa.css"></link>
 <script type="text/javascript" src="./dist/spa.js"></script>
 ```
 
-###AMD&CMD
+####AMD&CMD
 ```javascript
 // 引入SPA模块
 var SPA = require('spa');
 ```
 
-###初始化
+####初始化
 ```javascript
 // 构建SPA应用
 var APP = new SPA(project, config);
@@ -55,7 +55,7 @@ routes.push(routeName[, escape, preset, uri, templ, options]);
 APP.start(container[, storage, callback]);
 ```
 
-###结果
+####结果
 
 ```javascript
 APP = {
@@ -77,9 +77,9 @@ APP = {
 }
 ```
 
-###class SPA （SPA 类）
+####class SPA （SPA 类）
 
-####constructor (构造函数)
+#####constructor (构造函数)
 
 ```javascript
 constructor(project, config);
@@ -107,7 +107,7 @@ var APP = new SPA('project_name', {});
   }
 ```
 
-####router (路由)
+#####router (路由)
 
 ```javascript
 router(basePath);
@@ -119,7 +119,7 @@ var routes = APP.router('http://api.domain.com/');
 返回一个路由集合对象 routes，路由中的相对路径的API地址都会默认在前面加上 http://api.domain.com/;
 ```
 
-####路由规则
+#####路由规则
 路由集合对象提供push方法可以增加新的路由规则，没有定义路由也能访问hash解析的页面
 
 ```javascript
@@ -149,7 +149,7 @@ options = { // 其它选项
 }
 ```
 
-####start （开始）
+#####start （开始）
 
 执行此方法，SPA开始构建App，并加载显示页面
 
@@ -164,7 +164,7 @@ callback = { // 回调
 }
 ```
 
-###APP.controller(window.App) 应用控制器
+####APP.controller(window.App) 应用控制器
 
 SPA构建后最终得到的是controller对象，controller基于WebApp类构建，它会以App的名称暴露在window中，controller本身成员对象是APP中的storage，以存储APP中所需要的值或方法
 
@@ -227,7 +227,7 @@ controller.pushState(hash) // 加入新的url/hash地址
 * hash = string // 带有hash的url地址
 ```
 
-###WebView 页面视图
+####WebView 页面视图
 
 spajs中，每个页面都是独立的webview对象，webview基于WebView类构建
 
@@ -282,7 +282,7 @@ value = * // 保存的值
 ```
 
 
-###Template 模板
+####Template 模板
 
 spajs模板引擎使用[doT.js](http://olado.github.io/doT/)
 
@@ -331,7 +331,7 @@ template 标签属性
 <template data-title="标题文字"> // 页面标题
 ```
 
-###API 接口
+####API 接口
 
 spajs 数据基于接口 ajax，接口返回的数据必须遵守以下格式，key名的修改请参照 #SPA 构造函数#
 
